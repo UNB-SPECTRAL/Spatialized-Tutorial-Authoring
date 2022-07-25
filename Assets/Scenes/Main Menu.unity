@@ -808,7 +808,7 @@ GameObject:
   - component: {fileID: 2101459884}
   - component: {fileID: 2101459883}
   m_Layer: 0
-  m_Name: First Scene Controller
+  m_Name: Main Menu Controller
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1658,9 +1658,9 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: OnToggleHandMesh
+      - m_Target: {fileID: 2101459883}
+        m_TargetAssemblyTypeName: MainMenuController, Assembly-CSharp
+        m_MethodName: OnReplayButtonPress
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3336,9 +3336,9 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: ToggleProfiler
+      - m_Target: {fileID: 2101459883}
+        m_TargetAssemblyTypeName: MainMenuController, Assembly-CSharp
+        m_MethodName: OnRecordButtonPress
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4168,7 +4168,7 @@ GameObject:
   - component: {fileID: 6416233601444098650}
   - component: {fileID: 3387837267011993803}
   m_Layer: 0
-  m_Name: ButtonTwo
+  m_Name: Replay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5832,7 +5832,7 @@ GameObject:
   - component: {fileID: 5682473540094774953}
   - component: {fileID: 4094684586573003832}
   m_Layer: 0
-  m_Name: ButtonOne
+  m_Name: Record
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
