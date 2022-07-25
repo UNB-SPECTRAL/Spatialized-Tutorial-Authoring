@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class FirstSceneController : MonoBehaviour {
+public class MainMenuController : MonoBehaviour {
   public void OnRecordButtonPress() {
     Debug.Log("Record Button Pressed");
   }
