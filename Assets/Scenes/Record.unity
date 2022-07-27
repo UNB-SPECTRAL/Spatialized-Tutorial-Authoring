@@ -214,7 +214,7 @@ Transform:
   m_Children:
   - {fileID: 71361840}
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &192710654
 GameObject:
@@ -244,7 +244,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &244693212
 GameObject:
@@ -294,8 +294,49 @@ MonoBehaviour:
   Prefab_FrozenAnchorViz: {fileID: 114965271361823434, guid: d47affea335f196479d4ec680aca4223, type: 3}
   connectingLine: {fileID: 2100000, guid: 0d9513524d19caa48a7071447d2cd84f, type: 2}
   verticalDisplacement: -1
-  spongyWorldViz: {fileID: 0}
-  worldLockingVizRoot: {fileID: 0}
+--- !u!1 &250907776
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 250907778}
+  - component: {fileID: 250907777}
+  m_Layer: 0
+  m_Name: Record Scene Controller
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &250907777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250907776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06fa73f5fdad0c8488ad850fed168fcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &250907778
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250907776}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.12000303, y: -0.39244103, z: 1.9968733}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &408544382
 GameObject:
   m_ObjectHideFlags: 0
@@ -807,27 +848,6 @@ MonoBehaviour:
   weightsMaterial: {fileID: 2100000, guid: 1e46624c9f6c5374da2204cd8c11e698, type: 2}
   percentageWorldSpaceCanvasPrefab: {fileID: 3335127461111217805, guid: 20ac37323fee4694891b0de09cb74933, type: 3}
   targetSubtree: {fileID: 0}
-  percentageVisualizers:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  meshRenderer: {fileID: 0}
-  meshFilter: {fileID: 0}
-  triangleIsDirty: 0
-  currentBoundaryVertexIDx: -1
-  wireFrameMesh: {fileID: 0}
-  currentTriangleMesh: {fileID: 0}
-  triangleWeightMeshes:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  firstPinPosition: {x: 0, y: 0, z: 0}
-  secondPinPosition: {x: 0, y: 0, z: 0}
-  thirdPinPosition: {x: 0, y: 0, z: 0}
-  firstCubePosition: {x: 0, y: 0, z: 0}
-  secondCubePosition: {x: 0, y: 0, z: 0}
-  thirdCubePosition: {x: 0, y: 0, z: 0}
-  lastGeneratedTriangleIDs: ffffffffffffffffffffffff
   isVisible: 1
 --- !u!1 &837759765
 GameObject:
@@ -2220,7 +2240,7 @@ Transform:
   - {fileID: 37806881}
   - {fileID: 537146715}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 26.66, y: -22.3, z: 1.86}
 --- !u!114 &1939426534
 MonoBehaviour:
