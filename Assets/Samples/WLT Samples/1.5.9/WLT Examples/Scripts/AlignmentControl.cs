@@ -14,12 +14,6 @@ namespace Microsoft.MixedReality.WorldLocking.Examples
         [SerializeField]
         private List<SpacePin> spacePins = new List<SpacePin>();
 
-        // Start is called before the first frame update
-        void Start()
-        {
-
-        }
-
         public void Clear()
         {
             for (int i = 0; i < spacePins.Count; ++i)

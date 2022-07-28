@@ -229,14 +229,6 @@ namespace Microsoft.MixedReality.WorldLocking.Examples
             public readonly Vector3 hitNormal;
             public readonly GameObject gameObject;
 
-            public RayHit(Vector3 rayStart, RaycastHit hitInfo)
-            {
-                this.rayStart = rayStart;
-                this.hitPosition = hitInfo.point;
-                this.hitNormal = hitInfo.normal;
-                this.gameObject = hitInfo.collider?.gameObject;
-            }
-
             public RayHit(IPointerResult pointerResult)
             {
                 this.rayStart = pointerResult.StartPoint;
