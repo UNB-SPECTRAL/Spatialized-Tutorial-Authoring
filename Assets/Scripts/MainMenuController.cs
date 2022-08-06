@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenuController : MonoBehaviour {
   public void OnRecordButtonPress() {
-    Debug.Log("Record Button Pressed");
+    SceneManager.LoadScene("Record");
   }
 
   public void OnReplayButtonPress() {
