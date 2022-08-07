@@ -1,4 +1,3 @@
-#region Imports
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +7,6 @@ using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
-#endregion
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
@@ -138,6 +136,14 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     SaveData(_tooltipStore);
   }
 
+  #region Button Handlers
+    public void StartRecording() {
+      Debug.Log("Start Recording Button Pressed");
+      string sanitizedFilename = VideoRecordingProvider.Instance.StartRecording("Tooltip #" + _tooltipStore.tooltipDetailsList.Count);
+      Debug.Log("Sanitized FileName: " + sanitizedFilename);
+    }  
+  #endregion
+  
   #region Data Persistence Helpers
   TooltipStore GetData() {
     string serializedData = File.ReadAllText(Application.streamingAssetsPath + "/tooltips.json");
@@ -152,8 +158,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     File.WriteAllText(filePath, serializedData);
   }
   #endregion
-
-
+  
   #region Serialized Classes
   [Serializable]
   public class TooltipStore {
