@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
@@ -20,13 +22,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
 
   #region Private Variables
   // Stores the ToolTip pose and text for each air click
-  private readonly TooltipStore _tooltipStore;
+  private readonly ToolTipStore _toolTipStore;
   #endregion
 
   #region Constructor
   public RecordSceneController() {
     // When instantiating this class, load all the anchors from storage.
-    _tooltipStore = GetData();
+    _toolTipStore = GetData();
   }
   #endregion
 
@@ -55,7 +57,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     // Next, instantiate a tooltipPrefab with the parent of the MixedRealityPlayspace.
     GameObject newTooltip = Instantiate(tooltipPrefab, mixedRealityPlayspace);
     // Name the tooltip
-    newTooltip.name = "Tooltip #" + (_tooltipStore.tooltipDetailsList.Count + 1);
+    newTooltip.name = "Tooltip " + (_toolTipStore.tooltipDetails.Count + 1);
     // Add the tooltip text
     newTooltip.GetComponent<ToolTip>().ToolTipText = newTooltip.name;
     // Set its pose
@@ -81,11 +83,28 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   }
   #endregion IMixedRealityPointerHandler
 
+  private void SaveTooltip(GameObject toolTip) {
+    // Get tooltip details from the Tooltip prefab
+    string name       = toolTip.GetComponent<ToolTip>().ToolTipText;
+    Pose   globalPose = toolTip.transform.GetGlobalPose();
+
+    // Add toolTip details to the Tooltip Store
+    TooltipDetails tooltipDetails = new TooltipDetails {
+      name       = name,
+      globalPose = globalPose
+    };
+    _toolTipStore.tooltipDetails.Add(tooltipDetails);
+
+    // Persist the TooltipStore
+    SaveData(_toolTipStore);
+  }
+
+  #region Button Handlers
   /** Instantiate ToolTips from store */
   public void LoadToolTips() {
     Debug.Log("Load Anchors");
 
-    foreach (TooltipDetails toolTipDetails in _tooltipStore.tooltipDetailsList) {
+    foreach (TooltipDetails toolTipDetails in _toolTipStore.tooltipDetails) {
       Debug.Log("Found Tooltip: " + toolTipDetails.name + " in store");
 
       // Before instantiation, check if the tooltip is already in the scene.
@@ -115,56 +134,53 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
 
   /** Removes all the stored tooltips. */
   public void ResetTooltips() {
-    _tooltipStore.tooltipDetailsList.Clear();
+    _toolTipStore.tooltipDetails.Clear();
     // Persist the TooltipStore
-    SaveData(_tooltipStore);
+    SaveData(_toolTipStore);
   }
 
-  private void SaveTooltip(GameObject toolTip) {
-    // Get tooltip details from the Tooltip prefab
-    string name       = toolTip.GetComponent<ToolTip>().ToolTipText;
-    Pose   globalPose = toolTip.transform.GetGlobalPose();
-
-    // Add toolTip details to the Tooltip Store
-    TooltipDetails tooltipDetails = new TooltipDetails {
-      name       = name,
-      globalPose = globalPose
-    };
-    _tooltipStore.tooltipDetailsList.Add(tooltipDetails);
-
-    // Persist the TooltipStore
-    SaveData(_tooltipStore);
+  public void StartRecording() {
+    Debug.Log("Start Recording Button Pressed");
+    
+    // Find what is the last ToolTip name that was created.
+    string lastTooltipName = _toolTipStore.GetLastToolTip().name;
+    
+    // Use this name for the video file
+    string sanitizedFilename = VideoRecordingProvider.Start(lastTooltipName);
+    
+    // Save the sanitized filename to the ToolTipStore
+    _toolTipStore.tooltipDetails.Last().videoFilePath = sanitizedFilename;
+    // TODO: This should be a provider as well
+    SaveData(_toolTipStore);
   }
-
-  #region Button Handlers
-    public void StartRecording() {
-      Debug.Log("Start Recording Button Pressed");
-      string sanitizedFilename = VideoRecordingProvider.Instance.StartRecording("Tooltip #" + _tooltipStore.tooltipDetailsList.Count);
-      Debug.Log("Sanitized FileName: " + sanitizedFilename);
-    }  
   #endregion
-  
+
   #region Data Persistence Helpers
-  TooltipStore GetData() {
+  ToolTipStore GetData() {
     string serializedData = File.ReadAllText(Application.streamingAssetsPath + "/tooltips.json");
-    return JsonUtility.FromJson<TooltipStore>(serializedData);
+    return JsonUtility.FromJson<ToolTipStore>(serializedData);
   }
 
-  void SaveData(TooltipStore tooltipStore) {
-    string filePath = Path.Combine(Application.streamingAssetsPath, tooltipStore.fileName);
+  void SaveData(ToolTipStore toolTipStore) {
+    string filePath = Path.Combine(Application.streamingAssetsPath, toolTipStore.fileName);
 
-    string serializedData = JsonUtility.ToJson(_tooltipStore, true);
+    string serializedData = JsonUtility.ToJson(_toolTipStore, true);
 
     File.WriteAllText(filePath, serializedData);
   }
   #endregion
-  
+
   #region Serialized Classes
   [Serializable]
-  public class TooltipStore {
+  public class ToolTipStore {
     // Represents the device file name to store the tooltip data.
-    public string               fileName           = "tooltips.json";
-    public List<TooltipDetails> tooltipDetailsList = new List<TooltipDetails>();
+    public  string               fileName       = "tooltips.json";
+    public List<TooltipDetails> tooltipDetails = new List<TooltipDetails>();
+    
+    /*** Helpers ***/
+    public TooltipDetails GetLastToolTip() {
+      return tooltipDetails[tooltipDetails.Count - 1];
+    }
   }
 
   /**
@@ -174,8 +190,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
      */
   [Serializable]
   public class TooltipDetails {
-    public string name;
-    public Pose   globalPose;
+    public  string name; // The name of the tooltip (used to name the GameObject and the text used on the game object).
+    public  Pose   globalPose; // The global location and rotation of the game object.
+    public string videoFilePath; // File path of the associated video.
   }
   #endregion
 }
