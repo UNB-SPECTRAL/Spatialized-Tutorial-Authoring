@@ -73,6 +73,15 @@ public class VideoRecordingProvider : MonoBehaviour {
     // Return the filename to the caller
     return Path.Combine(Application.streamingAssetsPath, _fileName);
   }
+  
+  public static void Stop() {
+    if (_videoCapture is { IsRecording: false }) {
+      Debug.LogError("VideoRecorder.StopRecording: There is no recording in progress");
+      return;
+    }
+    // Stop the video capture process
+    _videoCapture.StopRecordingAsync(OnStopRecordingAsync);
+  }
   #endregion
 
   #region Private Static Methods
@@ -116,11 +125,6 @@ public class VideoRecordingProvider : MonoBehaviour {
     }
 
     Debug.Log("VideoRecorder.StartRecordingAsync: Success");
-    // FIXME: Stop the recording after 5 seconds.
-    _instance.StartCoroutine(
-      WaitForSecondsAnd(
-        10,
-        () => { _videoCapture.StopRecordingAsync(OnStopRecordingAsync); }));
   }
 
   private static void OnStopRecordingAsync(VideoCapture.VideoCaptureResult result) {

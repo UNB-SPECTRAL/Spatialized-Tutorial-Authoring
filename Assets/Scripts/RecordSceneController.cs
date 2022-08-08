@@ -140,7 +140,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   }
 
   public void StartRecording() {
-    Debug.Log("Start Recording Button Pressed");
+    Debug.Log("SpeechInputHandler: \"Start Recording\"");
     
     // Find what is the last ToolTip name that was created.
     string lastTooltipName = _toolTipStore.GetLastToolTip().name;
@@ -152,6 +152,11 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     _toolTipStore.tooltipDetails.Last().videoFilePath = sanitizedFilename;
     // TODO: This should be a provider as well
     SaveData(_toolTipStore);
+  }
+
+  public void StopRecording() {
+    Debug.Log("SpeechInputHandler: \"Stop Recording\"");
+    VideoRecordingProvider.Stop();
   }
   #endregion
 
