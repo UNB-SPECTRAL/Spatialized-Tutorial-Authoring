@@ -9,6 +9,11 @@ using UnityEngine.Windows.WebCam;
  * Provides video recording functionality to the Unity scene.
  */
 public class VideoRecordingProvider : MonoBehaviour {
+  #region Public Static Variables
+  public static bool IsRecording; // Whether or not the video is currently being recorded.
+  #endregion
+  
+  
   #region Private Static Variables
   private static VideoRecordingProvider _instance; // Used for`_instance.StartCoroutine`
   
@@ -125,9 +130,14 @@ public class VideoRecordingProvider : MonoBehaviour {
     }
 
     Debug.Log("VideoRecorder.StartRecordingAsync: Success");
+    // At this point, we can safely consider that the recording process has started.
+    IsRecording = true;
   }
 
   private static void OnStopRecordingAsync(VideoCapture.VideoCaptureResult result) {
+    // At any point, we can consider the recording process to has stopped.
+    IsRecording = false;
+    
     if (result.success == false) {
       Debug.LogError("VideoRecorder.StopRecordingAsync: Failed");
       return;
