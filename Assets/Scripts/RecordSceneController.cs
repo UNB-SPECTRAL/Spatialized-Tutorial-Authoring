@@ -1,27 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
   #region Public Variables
-  // Represents a prefab which will be rendered at the air click location
+  // Represents the prefab to render when marking a location.
   public GameObject tooltipPrefab;
-
   // Represents the parent of all ToolTips
   public Transform mixedRealityPlayspace;
+
+  [Header("Buttons")] 
+  public GameObject load;
+  public GameObject reset;
+  public GameObject stop;
   #endregion
 
   #region Private Variables
-  // Stores the ToolTip pose and text for each air click
+  // Reference to the ToolTip Store.
   private readonly ToolTipStore _toolTipStore;
   #endregion
 
@@ -47,59 +49,95 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion InputSystemGlobalHandlerListener Implementation
 
   #region IMixedRealityPointerHandler
-  /** Handles click events. */
+  /** When clicking, mark the location as if the user said "Mark" */
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
+    Debug.Log("OnPointerClicked");
+      
     // Once a click event is received, we capture the hit location and rotation to create a Pose.
-    Vector3    hitLocation = eventData.Pointer.Result.Details.Point;
-    Quaternion hitRotation = eventData.Pointer.Rotation;
-    Pose       globalPose  = new Pose(hitLocation, hitRotation);
+    Vector3    position = eventData.Pointer.Result.Details.Point;
+    Quaternion rotation = eventData.Pointer.Rotation;
+    Pose       pose  = new Pose(position, rotation);
 
-    // Next, instantiate a tooltipPrefab with the parent of the MixedRealityPlayspace.
-    GameObject newTooltip = Instantiate(tooltipPrefab, mixedRealityPlayspace);
-    // Name the tooltip
-    newTooltip.name = "Tooltip " + (_toolTipStore.tooltipDetails.Count + 1);
-    // Add the tooltip text
-    newTooltip.GetComponent<ToolTip>().ToolTipText = newTooltip.name;
-    // Set its pose
-    newTooltip.transform.SetGlobalPose(globalPose);
-    // Add world locking
-    ToggleWorldAnchor twa = newTooltip.AddComponent<ToggleWorldAnchor>();
-    twa.AlwaysLock = true;
-
-    // Then, save the tooltip details to storage for persistence.
-    SaveTooltip(newTooltip);
+    // Create a ToolTip at the pose
+    GameObject toolTip = CreateToolTip(pose);
+    
+    // Start recording
+    StartRecording(toolTip);
   }
 
-  public void OnPointerDown(MixedRealityPointerEventData eventData) {
-    // Debug.Log("RecordSceneController.OnPointerDown");
-  }
+  public void OnPointerDown(MixedRealityPointerEventData eventData) {}
 
-  public void OnPointerUp(MixedRealityPointerEventData eventData) {
-    // Debug.Log("RecordSceneController.OnPointerUp");
-  }
+  public void OnPointerUp(MixedRealityPointerEventData eventData) {}
 
-  public void OnPointerDragged(MixedRealityPointerEventData eventData) {
-    // Debug.Log("RecordSceneController.OnPointerDragged");
-  }
+  public void OnPointerDragged(MixedRealityPointerEventData eventData) {}
   #endregion IMixedRealityPointerHandler
+  
+  #region Private Methods
+  /** Given a pose, create a ToolTip and save it to disks */
+  private GameObject CreateToolTip(Pose pose) {
+    // Instantiate a ToolTip component with it's parent being the MixedRealityPlayspace
+    // TODO: Does this still have to be the case? Maybe we can move it under it's own GameObject?
+    GameObject toolTipGo = Instantiate(tooltipPrefab, mixedRealityPlayspace);
+    
+    // Configure the ToolTip
+    toolTipGo.name                                = "Tooltip " + (_toolTipStore.Count() + 1);
+    toolTipGo.GetComponent<ToolTip>().ToolTipText = toolTipGo.name;
+    toolTipGo.transform.SetGlobalPose(pose);
+    
+    // Add world locking
+    // TODO: Is this needed anymore?
+    toolTipGo.AddComponent<ToggleWorldAnchor>().AlwaysLock = true;
 
-  private void SaveTooltip(GameObject toolTip) {
-    // Get tooltip details from the Tooltip prefab
-    string name       = toolTip.GetComponent<ToolTip>().ToolTipText;
-    Pose   globalPose = toolTip.transform.GetGlobalPose();
+    // Save the ToolTip to the storage
+    _toolTipStore.Add(toolTipGo);
 
-    // Add toolTip details to the Tooltip Store
-    TooltipDetails tooltipDetails = new TooltipDetails {
-      name       = name,
-      globalPose = globalPose
-    };
-    _toolTipStore.tooltipDetails.Add(tooltipDetails);
-
-    // Persist the TooltipStore
-    SaveData(_toolTipStore);
+    return toolTipGo;
   }
-
-  #region Button Handlers
+  
+  /** Given a ToolTip, start recording a video for it */
+  private void StartRecording(GameObject toolTip) {
+    // Hide the Reset and Load buttons
+    reset.SetActive(false);
+    load.SetActive(false);
+    stop.SetActive(true);
+    
+    // Start the recording and save the video to a file with the same name as the toolTip.
+    // e.g. "tooltip_1.mp4" since we remove spaces, capitalization and add a .mp4 extension.
+    string sanitizedFilePath = VideoRecordingProvider.Start(toolTip.name);
+    
+    // While the recording is in progress, associated the video file path with the tooltip
+    _toolTipStore.UpdateVideoFilePath(toolTip, sanitizedFilePath);
+  }
+  #endregion
+  
+  #region Public Methods
+  /** When the user says "Mark", this will create a ToolTip at the primary pointer pose and start recording */
+  public void Mark() {
+    Debug.Log("Speech Recognized: \"Mark\"");
+    
+    // Get the pose for the primary pointer when saying "Mark".
+    Vector3    position = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.Details.Point;
+    Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
+    Pose       pose     = new Pose(position, rotation);
+    
+    // Create a ToolTip at the pose
+    GameObject toolTip = CreateToolTip(pose);
+    
+    // Start recording
+    StartRecording(toolTip);
+  }
+  
+  /** When the user says "End Marking", this will stop the recording */
+  public void EndMarking() {
+    // Show the Reset and Load buttons
+    reset.SetActive(true);
+    load.SetActive(true);
+    stop.SetActive(false);
+    
+    Debug.Log("Speech Recognized: \"End Marking\"");
+    VideoRecordingProvider.Stop();
+  }
+  
   /** Instantiate ToolTips from store */
   public void LoadToolTips() {
     Debug.Log("Load Anchors");
@@ -132,33 +170,31 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
   }
 
-  /** Removes all the stored tooltips. */
+  /** Reset ToolTip data (on disk as well) and delete all tooltip recordings. */
   public void ResetTooltips() {
+    // Reset the ToolTipStore and persist it.
     _toolTipStore.tooltipDetails.Clear();
     // Persist the TooltipStore
     SaveData(_toolTipStore);
-  }
-
-  public void StartRecording() {
-    Debug.Log("Start Recording Button Pressed");
     
-    // Find what is the last ToolTip name that was created.
-    string lastTooltipName = _toolTipStore.GetLastToolTip().name;
-    
-    // Use this name for the video file
-    string sanitizedFilename = VideoRecordingProvider.Start(lastTooltipName);
-    
-    // Save the sanitized filename to the ToolTipStore
-    _toolTipStore.tooltipDetails.Last().videoFilePath = sanitizedFilename;
-    // TODO: This should be a provider as well
-    SaveData(_toolTipStore);
+    // Delete all files in thee Streaming Assets directory.
+    string[] videoFiles = Directory.GetFiles(Application.streamingAssetsPath);
+    foreach (string videoFile in videoFiles) {
+      File.Delete(videoFile);
+    }
   }
   #endregion
 
   #region Data Persistence Helpers
+  // TODO: This can be in it's own class.
   ToolTipStore GetData() {
-    string serializedData = File.ReadAllText(Application.streamingAssetsPath + "/tooltips.json");
-    return JsonUtility.FromJson<ToolTipStore>(serializedData);
+    try {
+      string serializedData = File.ReadAllText(Application.streamingAssetsPath + "/tooltips.json");  
+      return JsonUtility.FromJson<ToolTipStore>(serializedData);
+    } catch (FileNotFoundException) {
+      Debug.Log("No Tooltip data found. Creating new data.");
+      return new ToolTipStore();
+    }
   }
 
   void SaveData(ToolTipStore toolTipStore) {
@@ -178,16 +214,43 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     public List<TooltipDetails> tooltipDetails = new List<TooltipDetails>();
     
     /*** Helpers ***/
-    public TooltipDetails GetLastToolTip() {
-      return tooltipDetails[tooltipDetails.Count - 1];
+    public int Count() => tooltipDetails.Count;
+    public TooltipDetails GetLastToolTip() => tooltipDetails[tooltipDetails.Count - 1];
+  
+    /** Add a new ToolTip to the store and saves it to disk */
+    public void Add(GameObject toolTip) {
+      tooltipDetails.Add(new TooltipDetails {
+        name       = toolTip.name,
+        globalPose = toolTip.transform.GetGlobalPose()
+      });
+      
+      // Save the data to disk
+      string filePath       = Path.Combine(Application.streamingAssetsPath, fileName);
+      string serializedData = JsonUtility.ToJson(this, true);
+      File.WriteAllText(filePath, serializedData);
+    }
+    
+    /** Update the video file path for a ToolTip */
+    public void UpdateVideoFilePath(GameObject toolTip, string videoFilePath) {
+      // Find the tooltip in the store
+      TooltipDetails tooltipDetails = this.tooltipDetails.Find(td => td.name == toolTip.name);
+      
+      // Update the value
+      tooltipDetails.videoFilePath = videoFilePath;
+      
+      // Save the data to disk
+      // TODO: This is duplicated
+      string filePath       = Path.Combine(Application.streamingAssetsPath, fileName);
+      string serializedData = JsonUtility.ToJson(this, true);
+      File.WriteAllText(filePath, serializedData);
     }
   }
 
   /**
-     * Class which stores tooltip details used to instantiate a Tooltip (
-     *   https://docs.microsoft.com/en-us/windows/mixed-reality/mrtk-unity/mrtk2/features/ux-building-blocks/tooltip?view=mrtkunity-2022-05
-     * ) prefab.
-     */
+   * Class which stores tooltip details used to instantiate a Tooltip (
+   *   https://docs.microsoft.com/en-us/windows/mixed-reality/mrtk-unity/mrtk2/features/ux-building-blocks/tooltip?view=mrtkunity-2022-05
+   * ) prefab.
+   */
   [Serializable]
   public class TooltipDetails {
     public  string name; // The name of the tooltip (used to name the GameObject and the text used on the game object).
