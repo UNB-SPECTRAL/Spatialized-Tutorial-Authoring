@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Experimental.InteractiveElement;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
+using UnityEditor;
 using UnityEngine;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
@@ -49,10 +51,21 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion InputSystemGlobalHandlerListener Implementation
 
   #region IMixedRealityPointerHandler
-  /** When clicking, mark the location as if the user said "Mark" */
+  /**
+   * When clicking, mark the location as if the user said "Mark"
+   *
+   * Note that we do not want to create a tooltip if we have clicked on a ToolTip.
+   */
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
     Debug.Log("OnPointerClicked");
-      
+    
+    // If the user clicked on a ToolTip, do not create a new one.
+    GameObject clickedGo = eventData.Pointer.Result.CurrentPointerTarget;
+    if (clickedGo != null && clickedGo.GetComponentInParent<ToolTip>() != null) {
+      Debug.Log("OnPointerClicked: Clicked on a ToolTip. Exiting");
+      return; 
+    }
+
     // Once a click event is received, we capture the hit location and rotation to create a Pose.
     Vector3    position = eventData.Pointer.Result.Details.Point;
     Quaternion rotation = eventData.Pointer.Rotation;

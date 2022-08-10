@@ -7,14 +7,21 @@ using UnityEngine.Video;
 /**
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
  */
-public class ToolTipVideoTutorialController : MonoBehaviour {
+public class VideoToolTipController : MonoBehaviour {
   public RecordSceneController.TooltipDetails tooltipDetails;
   public VideoPlayer                          videoPlayer;
 
   void Awake() {
     // Error handling in case this controller is added to a GameObject which doe snot have a ToolTip component.
+    // This is required since this Controller is specifically build to be used with the ToolTip component.
     if(gameObject.GetComponent<ToolTip>() == null) {
       Debug.LogError("VideoTutorialController requires a ToolTip component");
+    }
+    
+    // Error handling in case this GameObject does not have an Interactable component.
+    // This is required to play/pause the video when clicking on the VideoPlayer.
+    if(gameObject.GetComponent<Interactable>() == null) {
+      Debug.LogError("VideoTutorialController requires an Interactable component");
     }
   }
 
@@ -56,16 +63,31 @@ public class ToolTipVideoTutorialController : MonoBehaviour {
       videoPlayer.Stop();
       videoPlayer.renderMode = VideoRenderMode.APIOnly;
       videoPlayer.Prepare();
-      videoPlayer.prepareCompleted += (VideoPlayer source) => {
+      videoPlayer.prepareCompleted += (source) => {
         // Debug.Log("Video prepared");
         videoPlayer.Pause();
       };
       videoPlayer.sendFrameReadyEvents = true;
-      videoPlayer.frameReady += (VideoPlayer source, long frameIndex) => {
+      videoPlayer.frameReady += (source, frameIndex) => {
         // Debug.Log("Frame Ready");
         var thumbnail = source.texture;
         videoPlayer.GetComponent<Renderer>().material.mainTexture = thumbnail;
       };
     }));
   }
+  
+  #region Publc Methods
+  /** Handles the OnClick event for the VideoPlayer */
+  public void OnClick() {
+    Debug.Log("ToolTip Clicked");
+    // When the video is not playing, play it.
+    if(!videoPlayer.isPlaying) {
+      videoPlayer.Play();
+    }
+    // When the video is playing, pause it.
+    else {
+      videoPlayer.Pause();
+    }
+  }
+  #endregion
 }
