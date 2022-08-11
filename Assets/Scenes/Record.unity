@@ -509,9 +509,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tooltipPrefab: {fileID: 5356400354427446076, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
   mixedRealityPlayspace: {fileID: 71361840}
-  load: {fileID: 1939426525}
-  reset: {fileID: 2018504527}
-  stop: {fileID: 257052984}
+  loadButton: {fileID: 1939426525}
+  resetButton: {fileID: 2018504527}
+  stopButton: {fileID: 257052984}
+  state: 2
 --- !u!4 &250907778
 Transform:
   m_ObjectHideFlags: 0

@@ -1236,7 +1236,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   states: {fileID: 11400000, guid: 5eac1712038236e4b8ffdb3893804fe1, type: 2}
   InputActionId: 0
-  isGlobal: 1
+  isGlobal: 0
   Dimensions: 1
   dimensionIndex: 0
   startDimensionIndex: 0

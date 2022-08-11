@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.Contracts;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
 using UnityEngine;
@@ -60,8 +61,7 @@ public class VideoToolTipController : MonoBehaviour {
     videoPlayer.aspectRatio = VideoAspectRatio.FitInside;
     // TODO: Might need this when rendering on the HoloLens.
     // videoPlayer.targetCameraAlpha = 0.5f;
-    
-    
+
     // BUG: Rotate the video since its playing upside down for some reason.
     videoPlayer.transform.rotation = Quaternion.Euler(videoPlayer.transform.rotation.x, videoPlayer.transform.rotation.y, 180);
     
@@ -83,20 +83,62 @@ public class VideoToolTipController : MonoBehaviour {
         var thumbnail = source.texture;
         videoPlayer.GetComponent<Renderer>().material.mainTexture = thumbnail;
       };
+      
+      // When setting up the VideoPlayer we want to be notified when the video
+      // is ended to notify the RecordSceneController.
+      videoPlayer.loopPointReached += (source) => {
+        Debug.Log("Tooltip " + tooltipDetails.name + " video ended");
+        RecordSceneController.Instance.state = RecordSceneController.State.Idle;
+      };
     }));
   }
   
   #region Public Methods
-  /** Handles the OnClick event for the VideoPlayer */
+  /**
+   * When the RecordSceneController is in IDLE state, handle the OnClick event
+   * for the Tooltip. This will either play or pause the VideoPlayer.
+   */
   public void OnClick() {
-    Debug.Log("ToolTip Clicked");
-    // When the video is not playing, play it.
-    if(!videoPlayer.isPlaying) {
+    // FIXME: Logging since there seems to be multiple clicks on a ToolTip
+    Debug.Log("ToolTip " + tooltipDetails.name + " Clicked");
+    
+    // When the RecordSceneController is in RECORDING state, exit
+    if(RecordSceneController.CurrentState == RecordSceneController.State.Recording) {
+      Debug.Log("Recording state, exiting");
+      return;
+    }
+
+    // When the RecordSceneController is in IDLE state, AND the VideoPlayer is
+    // NOT playing, then play the VideoPlayer.
+    if(
+        RecordSceneController.CurrentState == RecordSceneController.State.Idle
+        && videoPlayer.isPlaying == false
+      ) {
+      // Notify the RecordSceneController that a video is playing
+      RecordSceneController.Instance.state = RecordSceneController.State.Playing;
+      
+      Debug.Log("Video is not playing. Playing video");
+      
       videoPlayer.Play();
     }
-    // When the video is playing, pause it.
-    else {
+    // When the RecordSceneController is in PLAYING state, AND the VideoPlayer
+    // IS playing, then this ToolTip must be playing the video and thus we can
+    // pause the VideoPlayer.
+    else if(
+        RecordSceneController.CurrentState == RecordSceneController.State.Playing
+        && videoPlayer.isPlaying == true
+      ) {
+      // Notify the RecordSceneController that a video is not playing
+      RecordSceneController.Instance.state = RecordSceneController.State.Idle;
+      
+      Debug.Log("Video is playing. Pausing video");
+      
       videoPlayer.Pause();
+    }
+    else {
+      Debug.Log("No case matched. Exiting");
+      Debug.Log(RecordSceneController.CurrentState);
+      Debug.Log(videoPlayer.isPlaying);  
     }
   }
   #endregion

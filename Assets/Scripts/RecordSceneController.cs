@@ -9,9 +9,18 @@ using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
+  #region Public Static Variables
+  // Static reference to the current instance of the class.
+  public static RecordSceneController Instance;
+  public static State CurrentState {
+    get => Instance.state;
+  }
+  #endregion
+   
   #region Public Variables
   // Represents the prefab to render when marking a location.
   public GameObject tooltipPrefab;
@@ -19,20 +28,53 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   public Transform mixedRealityPlayspace;
 
   [Header("Buttons")] 
-  public GameObject load;
-  public GameObject reset;
-  public GameObject stop;
+  public GameObject loadButton;
+  public GameObject resetButton;
+  public GameObject stopButton;
+
+  // Represents the RecordScene state. A user can either be idle, playing a video or recording a video.
+  // Each state can only perform certain actions.
+  // @default Idle
+  [HideInInspector]
+  public State state = State.Idle;
+  public enum State {
+    // When a video is being recorded.
+    Recording,
+    // When a video is being played.
+    Playing,
+    Idle,
+  }
   #endregion
 
   #region Private Variables
   // Reference to the ToolTip Store.
-  private readonly ToolTipStore _toolTipStore;
+  private ToolTipStore _toolTipStore;
   #endregion
+  
+  #region Unity Methods
+  void Awake() {
+    if(Instance == null) {
+      // Save the reference to the instance
+      Instance = this;
+      // Load ToolTip data from storage
+      // TODO: Rename this.
+      _toolTipStore = GetData();
+    }
+    else Destroy(this);
+  }
 
-  #region Constructor
-  public RecordSceneController() {
-    // When instantiating this class, load all the anchors from storage.
-    _toolTipStore = GetData();
+  void Update() {
+    // Handle showing the "Reset" and "Load" buttons when not in RECORDING state
+    if (state == State.Recording) {
+      loadButton.SetActive(false);
+      resetButton.SetActive(false);
+      stopButton.SetActive(true);
+    }
+    else {
+      loadButton.SetActive(true);
+      resetButton.SetActive(true);
+      stopButton.SetActive(false);
+    }
   }
   #endregion
 
@@ -52,12 +94,18 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
 
   #region IMixedRealityPointerHandler
   /**
-   * When clicking, mark the location as if the user said "Mark"
-   *
-   * Note that we do not want to create a tooltip if we have clicked on a ToolTip.
+   * In IDLE state, when clicking on any surface except another ToolTip, create a new ToolTip at that location
+   * and start recording a video.
    */
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
-    Debug.Log("OnPointerClicked");
+    // If we are not in the Idle State, don't do anything.
+    if (state != State.Idle) {
+      Debug.Log("OnPointerClicked: Not in Idle State");
+      return;
+      
+    }
+    // Log for debugging.
+    Debug.Log("OnPointerClicked: Success");
     
     // If the user clicked on a ToolTip, do not create a new one.
     GameObject clickedGo = eventData.Pointer.Result.CurrentPointerTarget;
@@ -115,11 +163,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   
   /** Given a ToolTipDetail, start recording a video for it */
   private void StartRecording(TooltipDetails toolTipDetails) {
-    // Hide the Reset and Load buttons
-    reset.SetActive(false);
-    load.SetActive(false);
-    stop.SetActive(true);
-    
+    // Change the state to RECORDING
+    state = State.Recording;
+
     // Start the recording and pass the name of the file which is the same name as the toolTip.
     // e.g. "tooltip_1.mp4" since we remove spaces, capitalization and add a .mp4 extension.
     VideoRecordingProvider.Start(toolTipDetails.name);
@@ -127,8 +173,17 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion
   
   #region Public Methods
-  /** When the user says "Mark", this will create a ToolTip at the primary pointer pose and start recording */
+  /**
+   * When in IDLE state and the user says the keyword "Mark", create a ToolTip
+   * at the current location ans start a recording.
+   */
   public void Mark() {
+    // If we are not in the Idle State, don't do anything.
+    if (state != State.Idle) {
+      Debug.Log("Speech Recognized: \"Mark\": Not in Idle State");
+      return;
+    }
+    
     Debug.Log("Speech Recognized: \"Mark\"");
     
     // Get the pose for the primary pointer when saying "Mark".
@@ -149,18 +204,22 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     StartRecording(tooltipDetails);
   }
   
-  /** When the user says "End Marking", this will stop the recording */
+  /**
+   * When the user is in RECORD state, stop recording and save the video to the storage.
+   */
   public void EndMarking() {
-    // Show the Reset and Load buttons
-    reset.SetActive(true);
-    load.SetActive(true);
-    stop.SetActive(false);
-    
+    if (state != State.Recording) {
+      Debug.Log("Speech Recognized: \"End Marking\": Not in Recording State");
+      return;  
+    }
+
     Debug.Log("Speech Recognized: \"End Marking\"");
-    
+
     // When stopping the video, store the video file path to the ToolTip.
     string videoFilePath = VideoRecordingProvider.Stop();
-    Debug.Log("Video file path: " + videoFilePath);
+
+    // Once the video has been stopped, change the state to IDLE.
+    state = State.Idle;
 
     // While the recording is in progress, associated the video file path with the tooltip
     _toolTipStore.UpdateVideoFilePath(_toolTipStore.GetLastToolTip(), videoFilePath);
