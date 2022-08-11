@@ -37,8 +37,6 @@ public class VideoToolTipController : MonoBehaviour {
     // video is currently being recorded.
     if(!String.IsNullOrEmpty(tooltipDetails.videoFilePath)) SetupVideoPlayer(tooltipDetails.videoFilePath);
     // Otherwise hide the VideoPlayer.
-    // TODO: YOU ARE HERE........
-    // FIXME: Potentially having this not active might cause issues with the rotation...
     else videoPlayer.gameObject.SetActive(false);
   }
 
@@ -48,6 +46,11 @@ public class VideoToolTipController : MonoBehaviour {
     if(!videoPlayer.gameObject.activeSelf && !String.IsNullOrEmpty(tooltipDetails.videoFilePath)) {
       videoPlayer.gameObject.SetActive(true);
       SetupVideoPlayer(tooltipDetails.videoFilePath);
+    }
+    
+    // If the local rotation of the VideoPlayer is not 0, 0, 180 then reset it to 0, 0, 180.
+    if(videoPlayer.transform.localRotation != Quaternion.Euler(0, 0, 180)) {
+      videoPlayer.transform.localRotation = Quaternion.Euler(0, 0, 180);
     }
   }
   
