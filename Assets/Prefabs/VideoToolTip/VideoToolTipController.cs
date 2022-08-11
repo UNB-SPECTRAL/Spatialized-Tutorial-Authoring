@@ -30,18 +30,25 @@ public class VideoToolTipController : MonoBehaviour {
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
     // Set these properties.
     gameObject.name = tooltipDetails.name;
+    GetComponent<ToolTip>().ToolTipText = tooltipDetails.name;
     gameObject.transform.SetGlobalPose(tooltipDetails.globalPose);
     
     // We must explicitly check if there is a `videoFilePath` in case this is a new ToolTip and the
     // video is currently being recorded.
     if(!String.IsNullOrEmpty(tooltipDetails.videoFilePath)) SetupVideoPlayer(tooltipDetails.videoFilePath);
+    // Otherwise hide the VideoPlayer.
+    // TODO: YOU ARE HERE........
+    // FIXME: Potentially having this not active might cause issues with the rotation...
+    else videoPlayer.gameObject.SetActive(false);
+  }
 
-    // ****** How To Play A Video ******
-    /*videoPlayer.Prepare();
-    videoPlayer.prepareCompleted += (VideoPlayer source) => {
-      Debug.Log("Video prepared");
-      source.Play();
-    };*/
+  void Update() {
+    // If the VideoPlayer GameObject is not active and there is a `videoFilePath` then show it.
+    // And setup the video player
+    if(!videoPlayer.gameObject.activeSelf && !String.IsNullOrEmpty(tooltipDetails.videoFilePath)) {
+      videoPlayer.gameObject.SetActive(true);
+      SetupVideoPlayer(tooltipDetails.videoFilePath);
+    }
   }
   
   /** Given a url, setup the VideoPlayer with a thumbnail image. */
@@ -53,7 +60,7 @@ public class VideoToolTipController : MonoBehaviour {
     
     
     // BUG: Rotate the video since its playing upside down for some reason.
-    videoPlayer.transform.rotation = Quaternion.Euler(0, 0, 180);
+    videoPlayer.transform.rotation = Quaternion.Euler(videoPlayer.transform.rotation.x, videoPlayer.transform.rotation.y, 180);
     
     // Finally generate a thumbnail of the video after ToolTip script has completed (wait 0.2s)
     // BUG: The ToolTip prefab is somehow disabling the VideoPlayer and causing an "Cannot Prepare a disabled VideoPlayer" error.
@@ -76,7 +83,7 @@ public class VideoToolTipController : MonoBehaviour {
     }));
   }
   
-  #region Publc Methods
+  #region Public Methods
   /** Handles the OnClick event for the VideoPlayer */
   public void OnClick() {
     Debug.Log("ToolTip Clicked");

@@ -1216,11 +1216,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tooltipDetails:
-    name: Tooltip 1
+    name: 
     globalPose:
-      position: {x: 0, y: 0, z: 1}
+      position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 0}
-    videoFilePath: C:/HoloTuts/Assets/StreamingAssets/tooltip_1.mp4
+    videoFilePath: 
   videoPlayer: {fileID: 4520570873609564591}
 --- !u!114 &5356400354427446074
 MonoBehaviour:

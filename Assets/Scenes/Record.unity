@@ -507,7 +507,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06fa73f5fdad0c8488ad850fed168fcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tooltipPrefab: {fileID: 1083549605185280, guid: afaef0108a478c44a9eac26658bc29bf, type: 3}
+  tooltipPrefab: {fileID: 5356400354427446076, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
   mixedRealityPlayspace: {fileID: 71361840}
   load: {fileID: 1939426525}
   reset: {fileID: 2018504527}
@@ -5385,68 +5385,3 @@ MonoBehaviour:
   _SortingLayer: 0
   _SortingLayerID: 0
   _SortingOrder: 0
---- !u!1001 &4520570873495432798
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_RootOrder
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5351997278196015190, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5355713087311198238, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5356400354427446076, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_Name
-      value: VideoToolTip
-      objectReference: {fileID: 0}
-    - target: {fileID: 5475574298685295312, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}

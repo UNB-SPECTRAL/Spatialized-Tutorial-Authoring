@@ -72,10 +72,16 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Pose       pose  = new Pose(position, rotation);
 
     // Create a ToolTip at the pose
-    GameObject toolTip = CreateToolTip(pose);
+    TooltipDetails tooltipDetails = new TooltipDetails() {
+      globalPose = pose
+    };
+    InstantiateToolTip(tooltipDetails);
+    
+    // Save the ToolTip to the storage
+    _toolTipStore.Add(tooltipDetails);
     
     // Start recording
-    StartRecording(toolTip);
+    StartRecording(tooltipDetails);
   }
 
   public void OnPointerDown(MixedRealityPointerEventData eventData) {}
@@ -87,39 +93,36 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   
   #region Private Methods
   /** Given a pose, create a ToolTip and save it to disks */
-  private GameObject CreateToolTip(Pose pose) {
+  private GameObject InstantiateToolTip(TooltipDetails tooltipDetails) {
     // Instantiate a ToolTip component with it's parent being the MixedRealityPlayspace
     // TODO: Does this still have to be the case? Maybe we can move it under it's own GameObject?
     GameObject toolTipGo = Instantiate(tooltipPrefab, mixedRealityPlayspace);
     
-    // Configure the ToolTip
-    toolTipGo.name                                = "Tooltip " + (_toolTipStore.Count() + 1);
-    toolTipGo.GetComponent<ToolTip>().ToolTipText = toolTipGo.name;
-    toolTipGo.transform.SetGlobalPose(pose);
+    // If the name is missing, generate a unique name
+    if (String.IsNullOrEmpty(tooltipDetails.name)) {
+      tooltipDetails.name = "Tooltip " + (_toolTipStore.Count() + 1);
+    }
     
+    // Configure the ToolTip
+    toolTipGo.GetComponent<VideoToolTipController>().tooltipDetails = tooltipDetails;
+
     // Add world locking
     // TODO: Is this needed anymore?
     toolTipGo.AddComponent<ToggleWorldAnchor>().AlwaysLock = true;
 
-    // Save the ToolTip to the storage
-    _toolTipStore.Add(toolTipGo);
-
     return toolTipGo;
   }
   
-  /** Given a ToolTip, start recording a video for it */
-  private void StartRecording(GameObject toolTip) {
+  /** Given a ToolTipDetail, start recording a video for it */
+  private void StartRecording(TooltipDetails toolTipDetails) {
     // Hide the Reset and Load buttons
     reset.SetActive(false);
     load.SetActive(false);
     stop.SetActive(true);
     
-    // Start the recording and save the video to a file with the same name as the toolTip.
+    // Start the recording and pass the name of the file which is the same name as the toolTip.
     // e.g. "tooltip_1.mp4" since we remove spaces, capitalization and add a .mp4 extension.
-    string sanitizedFilePath = VideoRecordingProvider.Start(toolTip.name);
-    
-    // While the recording is in progress, associated the video file path with the tooltip
-    _toolTipStore.UpdateVideoFilePath(toolTip, sanitizedFilePath);
+    VideoRecordingProvider.Start(toolTipDetails.name);
   }
   #endregion
   
@@ -134,10 +137,16 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Pose       pose     = new Pose(position, rotation);
     
     // Create a ToolTip at the pose
-    GameObject toolTip = CreateToolTip(pose);
+    TooltipDetails tooltipDetails = new TooltipDetails() {
+      globalPose = pose
+    };
+    InstantiateToolTip(tooltipDetails);
+    
+    // Save the ToolTip to the storage
+    _toolTipStore.Add(tooltipDetails);
     
     // Start recording
-    StartRecording(toolTip);
+    StartRecording(tooltipDetails);
   }
   
   /** When the user says "End Marking", this will stop the recording */
@@ -148,7 +157,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     stop.SetActive(false);
     
     Debug.Log("Speech Recognized: \"End Marking\"");
-    VideoRecordingProvider.Stop();
+    
+    // When stopping the video, store the video file path to the ToolTip.
+    string videoFilePath = VideoRecordingProvider.Stop();
+    Debug.Log("Video file path: " + videoFilePath);
+
+    // While the recording is in progress, associated the video file path with the tooltip
+    _toolTipStore.UpdateVideoFilePath(_toolTipStore.GetLastToolTip(), videoFilePath);
   }
   
   /** Instantiate ToolTips from store */
@@ -169,16 +184,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       // Otherwise, instantiate it.
       else {
         // Instantiate the tooltip using the given prefab and set its parent to the playspace.
-        GameObject newTooltip = Instantiate(tooltipPrefab, mixedRealityPlayspace);
-        // Name the tooltip
-        newTooltip.name = toolTipDetails.name;
-        // Set it's pose
-        newTooltip.transform.SetGlobalPose(toolTipDetails.globalPose);
-        // And world lock it.
-        ToggleWorldAnchor twa = newTooltip.AddComponent<ToggleWorldAnchor>();
-        twa.AlwaysLock = true;
-        // And add text
-        newTooltip.GetComponent<ToolTip>().ToolTipText = toolTipDetails.name;
+        InstantiateToolTip(toolTipDetails);
       }
     }
   }
@@ -231,11 +237,8 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     public TooltipDetails GetLastToolTip() => tooltipDetails[tooltipDetails.Count - 1];
   
     /** Add a new ToolTip to the store and saves it to disk */
-    public void Add(GameObject toolTip) {
-      tooltipDetails.Add(new TooltipDetails {
-        name       = toolTip.name,
-        globalPose = toolTip.transform.GetGlobalPose()
-      });
+    public void Add(TooltipDetails toolTipDetails) {
+      tooltipDetails.Add(toolTipDetails);
       
       // Save the data to disk
       string filePath       = Path.Combine(Application.streamingAssetsPath, fileName);
@@ -244,9 +247,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
     
     /** Update the video file path for a ToolTip */
-    public void UpdateVideoFilePath(GameObject toolTip, string videoFilePath) {
+    public void UpdateVideoFilePath(TooltipDetails toolTipDetails, string videoFilePath) {
       // Find the tooltip in the store
-      TooltipDetails tooltipDetails = this.tooltipDetails.Find(td => td.name == toolTip.name);
+      TooltipDetails tooltipDetails = this.tooltipDetails.Find(td => td.name == toolTipDetails.name);
       
       // Update the value
       tooltipDetails.videoFilePath = videoFilePath;
