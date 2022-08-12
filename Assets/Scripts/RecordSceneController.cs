@@ -2,23 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.MixedReality.Toolkit;
-using Microsoft.MixedReality.Toolkit.Experimental.InteractiveElement;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
-using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
   #region Public Static Variables
   // Static reference to the current instance of the class.
   public static RecordSceneController Instance;
-  public static State CurrentState {
-    get => Instance.state;
-  }
+  public static State CurrentState { get => Instance.state; }
   #endregion
    
   #region Public Variables
@@ -100,36 +94,35 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
     // If we are not in the Idle State, don't do anything.
     if (state != State.Idle) {
-      Debug.Log("OnPointerClicked: Not in Idle State");
-      return;
-      
-    }
-    // Log for debugging.
-    Debug.Log("OnPointerClicked: Success");
+      Debug.Log("OnPointerClicked: Not in Idle State"); 
+    } else {
+      // Log for debugging.
+      Debug.Log("OnPointerClicked: Success");
     
-    // If the user clicked on a ToolTip, do not create a new one.
-    GameObject clickedGo = eventData.Pointer.Result.CurrentPointerTarget;
-    if (clickedGo != null && clickedGo.GetComponentInParent<ToolTip>() != null) {
-      Debug.Log("OnPointerClicked: Clicked on a ToolTip. Exiting");
-      return; 
-    }
+      // If the user clicked on a ToolTip, do not create a new one.
+      GameObject clickedGo = eventData.Pointer.Result.CurrentPointerTarget;
+      if (clickedGo != null && clickedGo.GetComponentInParent<ToolTip>() != null) {
+        Debug.Log("OnPointerClicked: Clicked on a ToolTip. Exiting");
+        return; 
+      }
 
-    // Once a click event is received, we capture the hit location and rotation to create a Pose.
-    Vector3    position = eventData.Pointer.Result.Details.Point;
-    Quaternion rotation = eventData.Pointer.Rotation;
-    Pose       pose  = new Pose(position, rotation);
+      // Once a click event is received, we capture the hit location and rotation to create a Pose.
+      Vector3    position = eventData.Pointer.Result.Details.Point;
+      Quaternion rotation = eventData.Pointer.Rotation;
+      Pose       pose     = new Pose(position, rotation);
 
-    // Create a ToolTip at the pose
-    TooltipDetails tooltipDetails = new TooltipDetails() {
-      globalPose = pose
-    };
-    InstantiateToolTip(tooltipDetails);
+      // Create a ToolTip at the pose
+      TooltipDetails tooltipDetails = new TooltipDetails() {
+        globalPose = pose
+      };
+      InstantiateToolTip(tooltipDetails);
     
-    // Save the ToolTip to the storage
-    _toolTipStore.Add(tooltipDetails);
+      // Save the ToolTip to the storage
+      _toolTipStore.Add(tooltipDetails);
     
-    // Start recording
-    StartRecording(tooltipDetails);
+      // Start recording
+      StartRecording(tooltipDetails);
+    }
   }
 
   public void OnPointerDown(MixedRealityPointerEventData eventData) {}
