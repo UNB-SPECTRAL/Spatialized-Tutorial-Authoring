@@ -488,6 +488,7 @@ GameObject:
   - component: {fileID: 250907778}
   - component: {fileID: 250907777}
   - component: {fileID: 250907779}
+  - component: {fileID: 250907780}
   m_Layer: 0
   m_Name: Record Scene Controller
   m_TagString: Untagged
@@ -575,6 +576,35 @@ MonoBehaviour:
           m_CallState: 2
   persistentKeywords: 0
   speechConfirmationTooltipPrefab: {fileID: 0}
+--- !u!114 &250907780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250907776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8de1283adb8ab574da200bee434b4524, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isFocusRequired: 0
+  initialSilenceTimeout: 5
+  autoSilenceTimeout: 20
+  recordingTime: 3599
+  startRecordingOnStart: 0
+  OnDictationHypothesis:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDictationResult:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDictationComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDictationError:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &257052984
 GameObject:
   m_ObjectHideFlags: 0

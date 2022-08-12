@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -60,7 +58,7 @@ public class VideoRecordingProvider : MonoBehaviour {
   #endregion
 
   #region Public Static Methods
-  public static void Start(string fileName) {
+  public static void StartRecording(string fileName) {
     if (_videoCapture is { IsRecording: true }) {
       Debug.LogError("VideoRecorder.StartRecording: There is already a recording in progress");
       return;
@@ -81,7 +79,7 @@ public class VideoRecordingProvider : MonoBehaviour {
   }
   
   /** Stops the video recording and return the file path to the video. */
-  public static string Stop() {
+  public static string StopRecording() {
     if (_videoCapture is { IsRecording: false }) {
       Debug.LogError("VideoRecorder.StopRecording: There is no recording in progress");
       return null;
@@ -159,10 +157,4 @@ public class VideoRecordingProvider : MonoBehaviour {
     _filePath = null;
   }
   #endregion
-
-  // TODO: Move this to a static utility class.
-  static IEnumerator WaitForSecondsAnd(float seconds, Action action) {
-    yield return new WaitForSeconds(seconds);
-    action();
-  }
 }

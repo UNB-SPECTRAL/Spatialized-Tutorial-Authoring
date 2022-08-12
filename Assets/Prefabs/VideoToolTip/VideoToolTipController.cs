@@ -9,7 +9,7 @@ using UnityEngine.Video;
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
  */
 public class VideoToolTipController : MonoBehaviour {
-  public RecordSceneController.TooltipDetails tooltipDetails;
+  public RecordSceneController.ToolTipDetails toolTipDetails;
   public VideoPlayer                          videoPlayer;
 
   void Awake() {
@@ -30,13 +30,13 @@ public class VideoToolTipController : MonoBehaviour {
     /*** ToolTip Configuration ***/
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
     // Set these properties.
-    gameObject.name = tooltipDetails.name;
-    GetComponent<ToolTip>().ToolTipText = tooltipDetails.name;
-    gameObject.transform.SetGlobalPose(tooltipDetails.globalPose);
+    gameObject.name = toolTipDetails.name;
+    GetComponent<ToolTip>().ToolTipText = toolTipDetails.name;
+    gameObject.transform.SetGlobalPose(toolTipDetails.globalPose);
     
     // We must explicitly check if there is a `videoFilePath` in case this is a new ToolTip and the
     // video is currently being recorded.
-    if(!String.IsNullOrEmpty(tooltipDetails.videoFilePath)) SetupVideoPlayer(tooltipDetails.videoFilePath);
+    if(!String.IsNullOrEmpty(toolTipDetails.videoFilePath)) SetupVideoPlayer(toolTipDetails.videoFilePath);
     // Otherwise hide the VideoPlayer.
     else videoPlayer.gameObject.SetActive(false);
   }
@@ -44,9 +44,9 @@ public class VideoToolTipController : MonoBehaviour {
   void Update() {
     // If the VideoPlayer GameObject is not active and there is a `videoFilePath` then show it.
     // And setup the video player
-    if(!videoPlayer.gameObject.activeSelf && !String.IsNullOrEmpty(tooltipDetails.videoFilePath)) {
+    if(!videoPlayer.gameObject.activeSelf && !String.IsNullOrEmpty(toolTipDetails.videoFilePath)) {
       videoPlayer.gameObject.SetActive(true);
-      SetupVideoPlayer(tooltipDetails.videoFilePath);
+      SetupVideoPlayer(toolTipDetails.videoFilePath);
     }
     
     // If the local rotation of the VideoPlayer is not 0, 0, 180 then reset it to 0, 0, 180.
@@ -87,7 +87,7 @@ public class VideoToolTipController : MonoBehaviour {
       // When setting up the VideoPlayer we want to be notified when the video
       // is ended to notify the RecordSceneController.
       videoPlayer.loopPointReached += (source) => {
-        Debug.Log("Tooltip " + tooltipDetails.name + " video ended");
+        Debug.Log("Tooltip " + toolTipDetails.name + " video ended");
         RecordSceneController.Instance.state = RecordSceneController.State.Idle;
       };
     }));
@@ -100,7 +100,7 @@ public class VideoToolTipController : MonoBehaviour {
    */
   public void OnClick() {
     // FIXME: Logging since there seems to be multiple clicks on a ToolTip
-    Debug.Log("ToolTip " + tooltipDetails.name + " Clicked");
+    Debug.Log("ToolTip " + toolTipDetails.name + " Clicked");
     
     // When the RecordSceneController is in RECORDING state, exit
     if(RecordSceneController.CurrentState == RecordSceneController.State.Recording) {

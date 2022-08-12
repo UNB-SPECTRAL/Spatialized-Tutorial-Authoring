@@ -831,7 +831,7 @@ GameObject:
   - component: {fileID: 5356400354427446074}
   m_Layer: 0
   m_Name: VideoToolTip
-  m_TagString: Untagged
+  m_TagString: ToolTip
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1215,12 +1215,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3c4f47d4722f204788afdc2e4830f13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tooltipDetails:
+  toolTipDetails:
     name: 
     globalPose:
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 0}
     videoFilePath: 
+    transcript: 
   videoPlayer: {fileID: 4520570873609564591}
 --- !u!114 &5356400354427446074
 MonoBehaviour:
