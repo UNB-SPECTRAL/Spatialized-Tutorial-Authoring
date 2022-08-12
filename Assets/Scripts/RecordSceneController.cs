@@ -244,7 +244,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     
     /*** Start Recording ***/
     // Start video recording (pass along the filename)
-    VideoRecordingProvider.StartRecording(stepDetails.name);
+    CameraProvider.StartRecording(stepDetails.name);
     // Start a dictation recording
     _dictationHandler.StartRecording(); 
   }
@@ -295,7 +295,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     
     /*** Stop Recording ***/
     // Stop video recording (this method returns the file path of the video)
-    string videoFilePath = VideoRecordingProvider.StopRecording();
+    string videoFilePath = CameraProvider.StopRecording();
     // Stop the dictation recording
     _dictationHandler.StopRecording();
     
