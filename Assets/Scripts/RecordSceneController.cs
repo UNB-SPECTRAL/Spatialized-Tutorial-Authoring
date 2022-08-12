@@ -7,6 +7,9 @@ using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
 
+/*** Import Helpers ***/
+using StepDetails = RecordSceneController.StepStore.StepDetails;
+
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
   #region Public Static Variables
@@ -28,11 +31,15 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   public static State CurrentState => Instance.state;
   #endregion
    
-  #region Public Variables
+  #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
-  public GameObject tooltipPrefab;
-  /** The parent GameObject that all `tooltipPrefab`'s will be instantiated under. */
-  public Transform mixedRealityPlayspace;
+  public GameObject stepPrefab;
+  /**
+   * The parent GameObject that all `tooltipPrefab`'s will be instantiated under.
+   *
+   * TODO: Determine should be the parent for correct WLT support.
+   */
+  public Transform stepPrefabParent;
   
   /**
    * In the Record scene, there are currently 3 buttons which are used to "work" the scene.
@@ -76,7 +83,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * `.data` extension specifies that this will be stored in Streaming Assets. This can be observable
    * as well so anytime that we call `set` we update the persistent stored version.
    */
-  private ToolTipStore _toolTipStore;
+  private StepStore _stepStore;
   
   /** Reference to the DictationHandler script which is used to toggle speech-to-text */
   private DictationHandler _dictationHandler;
@@ -88,13 +95,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Set the static reference to the instantiated RecordSceneController if none exists. Otherwise, destroy this GameObject.
    * - Load the ToolTipStore from storage.
    */
-  void Awake() {
+  private void Awake() {
     if(Instance == null) {
       // Save the reference to the instance
       Instance = this;
       // Load ToolTip data from storage
       // TODO: Rename this.
-      _toolTipStore = GetData();
+      _stepStore = StepStore.Load();
     }
     else Destroy(this);
     
@@ -113,6 +120,11 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     _dictationHandler = GetComponent<DictationHandler>();
     // Add an event listener when the DictationHandler stops recording.
     _dictationHandler.OnDictationComplete.AddListener(OnDictationComplete);
+    // Capture the transcript hypothesis in real-time to determine if the keyword
+    // "End Marking" is being said to stop the recording. This has to be done this
+    // way since the MRTK keyword recognizer is turned off when the DictationHandler
+    // is recording.
+    _dictationHandler.OnDictationHypothesis.AddListener(OnDictationHypothesis);
     // Add an event listener when the DictationHandler has an error
     _dictationHandler.OnDictationError.AddListener(OnDictationError);
   }
@@ -178,16 +190,16 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       Pose       pose     = new Pose(position, rotation);
 
       // Create a ToolTip at the pose
-      ToolTipDetails toolTipDetails = new ToolTipDetails() {
+      StepDetails stepDetails = new StepDetails() {
         globalPose = pose
       };
-      InstantiateToolTip(toolTipDetails);
+      InstantiateToolTip(stepDetails);
     
       // Save the ToolTip to the storage
-      _toolTipStore.Add(toolTipDetails);
+      _stepStore.Add(stepDetails);
     
       // Start recording
-      StartRecording(toolTipDetails);
+      StartRecording(stepDetails);
     }
   }
 
@@ -200,18 +212,18 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   
   #region Private Methods
   /** Given a pose, create a ToolTip and save it to disks */
-  private void InstantiateToolTip(ToolTipDetails toolTipDetails) {
+  private void InstantiateToolTip(StepDetails stepDetails) {
     // Instantiate a ToolTip component with it's parent being the MixedRealityPlayspace
     // TODO: Does this still have to be the case? Maybe we can move it under it's own GameObject?
-    GameObject toolTipGo = Instantiate(tooltipPrefab, mixedRealityPlayspace);
+    GameObject toolTipGo = Instantiate(stepPrefab, stepPrefabParent);
     
     // If the name is missing, generate a unique name
-    if (String.IsNullOrEmpty(toolTipDetails.name)) {
-      toolTipDetails.name = "Tooltip " + (_toolTipStore.Count() + 1);
+    if (String.IsNullOrEmpty(stepDetails.name)) {
+      stepDetails.name = "Step " + (_stepStore.Count + 1);
     }
     
     // Configure the ToolTip
-    toolTipGo.GetComponent<VideoToolTipController>().toolTipDetails = toolTipDetails;
+    toolTipGo.GetComponent<StepController>().stepDetails = stepDetails;
 
     // Add world locking
     // TODO: Is this needed anymore?
@@ -226,13 +238,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Starting a video (camera/microphone) recording
    * - Starting a speech to text (via Unity Dictation) recording
    */
-  private void StartRecording(ToolTipDetails toolTipDetails) {
+  private void StartRecording(StepDetails stepDetails) {
     // Change the state to RECORDING
     state = State.Recording;
     
     /*** Start Recording ***/
     // Start video recording (pass along the filename)
-    VideoRecordingProvider.StartRecording(toolTipDetails.name);
+    VideoRecordingProvider.StartRecording(stepDetails.name);
     // Start a dictation recording
     _dictationHandler.StartRecording(); 
   }
@@ -258,16 +270,16 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Pose       pose     = new Pose(position, rotation);
     
     // Create a ToolTip at the pose
-    ToolTipDetails toolTipDetails = new ToolTipDetails() {
+    StepDetails stepDetails = new StepDetails() {
       globalPose = pose
     };
-    InstantiateToolTip(toolTipDetails);
+    InstantiateToolTip(stepDetails);
     
     // Save the ToolTip to the storage
-    _toolTipStore.Add(toolTipDetails);
+    _stepStore.Add(stepDetails);
     
     // Start recording
-    StartRecording(toolTipDetails);
+    StartRecording(stepDetails);
   }
   
   /**
@@ -292,22 +304,22 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     state = State.Idle;
 
     // While the recording is in progress, associated the video file path with the tooltip
-    _toolTipStore.UpdateLastTooltipVideoFilePath(videoFilePath);
+    _stepStore.UpdateLastTooltipVideoFilePath(videoFilePath);
   }
   
   /** Instantiate ToolTips from store */
   public void LoadToolTips() {
-    Debug.Log("Load Anchors");
+    Debug.Log("Load Steps");
 
-    foreach (ToolTipDetails toolTipDetails in _toolTipStore.tooltips) {
-      Debug.Log("Found Tooltip: " + toolTipDetails.name + " in store");
+    foreach (StepDetails toolTipDetails in _stepStore.steps) {
+      Debug.Log("Found " + toolTipDetails.name.Split(':')[0] + " in store");
 
       // Before instantiation, check if the tooltip is already in the scene.
       GameObject existingTooltip = GameObject.Find(toolTipDetails.name);
 
       // If the ToolTip does exist, skip it.
       if (existingTooltip != null) {
-        Debug.Log(toolTipDetails.name + " already exists in scene.");
+        Debug.Log(toolTipDetails.name.Split(':')[0] + " already exists in scene.");
         continue;
       }
       
@@ -320,10 +332,8 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   /** Reset ToolTip data (on disk as well) and delete all tooltip recordings. */
   public void ResetTooltips() {
     // Reset the ToolTipStore and persist it.
-    _toolTipStore.tooltips.Clear();
-    // Persist the TooltipStore
-    SaveData(_toolTipStore);
-    
+    _stepStore.Reset();
+
     // Delete all files in the Streaming Assets directory.
     string[] videoFiles = Directory.GetFiles(Application.streamingAssetsPath);
     foreach (string videoFile in videoFiles) {
@@ -331,7 +341,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
     
     // Also delete all GameObjects tagged as ToolTip so that they don't appear anymore.
-    GameObject[] tooltips = GameObject.FindGameObjectsWithTag("ToolTip");
+    GameObject[] tooltips = GameObject.FindGameObjectsWithTag("Step");
     foreach (GameObject tooltip in tooltips) {
       Destroy(tooltip);
     }
@@ -339,13 +349,26 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion
   
   #region Dictation Event Handler
+  /**
+   * When the DictationHandler is recording, this method will be given it's hypothesized transcript
+   * which we use to determine if the keyword "End Marking" is being said to stop the recording.
+   */
+  void OnDictationHypothesis(string transcript) {
+    // We found that "End Marking" is sometimes transcribed as "And Marking"
+    // so we are just now looking for the keyword "Marking" instead.
+    if (transcript.ToLower().Contains("marking")) {
+      EndMarking();
+    }
+  }
+  
+  
   /** When `DictationHandler.StopRecording` is called, this function will be given the final transcript */
   void OnDictationComplete(string transcript) {
     // FIXME: Logging
     Debug.Log("Dictation Complete: " + transcript);
     
     // Associate this transcript to the latest ToolTip
-    _toolTipStore.UpdateLastToolTipTranscript(transcript);
+    _stepStore.UpdateLastStepTranscript(transcript);
   }
 
   void OnDictationError(string error) {
@@ -354,47 +377,30 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
 
   #endregion
 
-  #region Data Persistence Helpers
-  // TODO: This can be in it's own class.
-  ToolTipStore GetData() {
-    try {
-      string serializedData = File.ReadAllText(Application.streamingAssetsPath + "/tooltips.json");  
-      return JsonUtility.FromJson<ToolTipStore>(serializedData);
-    } catch (FileNotFoundException) {
-      Debug.Log("No Tooltip data found. Creating new data.");
-      return new ToolTipStore();
-    }
-  }
-
-  void SaveData(ToolTipStore toolTipStore) {
-    string filePath = Path.Combine(Application.streamingAssetsPath, toolTipStore.fileName);
-
-    string serializedData = JsonUtility.ToJson(_toolTipStore, true);
-
-    File.WriteAllText(filePath, serializedData);
-  }
-  #endregion
-
   #region Serialized Classes
-  
-  /** The model used to store all the ToolTip information which is persisted to storage. */
+  /** The model used to store Steps */
   [Serializable]
-  public class ToolTipStore {
+  public class StepStore {
+    /*** Public Static Variables ***/
     /**
-     * All persistent classes should include a `fileName` field so that we can automatically
-     * store the file without specifying it's name.
+     * Since this is a data file, there is a 1-1 mapping between data on disk and in memory.
+     * This field is used to associated the two.
+     *
+     * Since the this class will be serialized, we include a `.json` extension.
      */
-    public  string              fileName       = "tooltips.json";
-    /** All ToolTip details are stores in this list. */
-    public List<ToolTipDetails> tooltips = new List<ToolTipDetails>();
+    public static string FileName = "steps" + ".json";
+    
+    /*** Instance Public Variables ***/
+    /** Field which stores all the steps */
+    public List<StepDetails> steps = new List<StepDetails>();
     
     /*** Helpers ***/
-    public int Count() => tooltips.Count;
-    public ToolTipDetails GetLastToolTip() => tooltips[Count() - 1];
+    public int Count => steps.Count;
+    public StepDetails GetLastStep() => steps[Count - 1];
   
     /** Add a new ToolTip to the store and saves it to disk */
-    public void Add(ToolTipDetails toolTipDetails) {
-      tooltips.Add(toolTipDetails);
+    public void Add(StepDetails stepDetails) {
+      steps.Add(stepDetails);
       
       // Save data to disk
       Save();
@@ -403,47 +409,86 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     /** Update the video file path for a ToolTip */
     public void UpdateLastTooltipVideoFilePath(string videoFilePath) {
       // Get the last ToolTip in the list
-      ToolTipDetails lastToolTipDetails = GetLastToolTip();
+      StepDetails lastStepDetails = GetLastStep();
       
       // Update the value
-      lastToolTipDetails.videoFilePath = videoFilePath;
+      lastStepDetails.videoFilePath = videoFilePath;
       
       // Save data to disk
       Save();
     }
-
-    /** Easily allows the last ToolTip to be update with the latest transcription text */
-    public void UpdateLastToolTipTranscript(string transcript) {
-      // Get the last ToolTipDetails
-      ToolTipDetails lastToolTipDetails = GetLastToolTip();
+    
+    public void UpdateLastStepTranscript(string transcript) {
+      StepDetails lastStepDetails = GetLastStep();
       
       // Update the value
-      lastToolTipDetails.transcript = transcript;
+      lastStepDetails.transcript = transcript;
+      
+      // TODO: Can we make this reactive?
+      // When updating the transcript, also update the text so that we can include
+      // 20 characters of transcript text in the UI.
+      lastStepDetails.name += ": " + transcript.Substring(0, (Math.Min(16, transcript.Length))) + "...";
       
       // Save data to disk
+      Save();
+    }
+    
+    /** Reset this StepStore instance */
+    public void Reset() {
+      steps.Clear();
       Save();
     }
     
     /*** Persistence Helpers ***/
     /** TODO: It would be great to have this be called when any setters are called. */
     private void Save() {
-      string filePath       = Path.Combine(Application.streamingAssetsPath, fileName);
+      string filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
       string serializedData = JsonUtility.ToJson(this, true);
       File.WriteAllText(filePath, serializedData);
     }
-  }
-
-  /**
-   * Class which stores tooltip details used to instantiate a Tooltip (
-   *   https://docs.microsoft.com/en-us/windows/mixed-reality/mrtk-unity/mrtk2/features/ux-building-blocks/tooltip?view=mrtkunity-2022-05
-   * ) prefab.
-   */
-  [Serializable]
-  public class ToolTipDetails {
-    public string name; // The name of the tooltip (used to name the GameObject and the text used on the game object).
-    public Pose   globalPose; // The global location and rotation of the game object.
-    public string videoFilePath; // File path of the associated video.
-    public string transcript; // The transcript of the video.
+  
+    /** Load the StepStore date from disk */
+    public static StepStore Load() {
+      // Try to load the data from disk since it could have been deleted.
+      try {
+        string filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
+        string serializedData = File.ReadAllText(filePath);  
+        return JsonUtility.FromJson<StepStore>(serializedData);
+      } catch (FileNotFoundException) {
+        Debug.Log("No step date found. Creating new data.");
+        
+        // When no step data is found, we create a new instance.
+        StepStore stepStore = new StepStore();
+        
+        // And save that instance to disk.
+        stepStore.Save();
+        
+        // Return the new instance.
+        return new StepStore();
+      }
+    }
+    
+    #region Child Class
+    /** Stores step information */
+    [Serializable]
+    public class StepDetails {
+      /** The name of the Step which will be shown on the Step prefab */
+      public string name;
+      /** The global Unity position of the Step. This only works if using the Microsoft World Locking Toolkit */
+      public Pose globalPose;
+      /** The path to the video file */
+      public string videoFilePath;
+      /**
+     * The transcript of the recorded video.
+     *
+     * TODO: Technically the recording and video are done at the same time so
+     * there could be some text that does not make it in the video or text that
+     * is missing from the video due to timing. It would be great to send the
+     * audio from the recorded video to the DictationHandler so that they match.
+     */
+      public string transcript; // The transcript of the video.
+    }
+    #endregion
   }
   #endregion
 }

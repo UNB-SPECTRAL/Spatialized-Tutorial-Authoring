@@ -508,8 +508,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06fa73f5fdad0c8488ad850fed168fcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tooltipPrefab: {fileID: 5356400354427446076, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
-  mixedRealityPlayspace: {fileID: 71361840}
+  stepPrefab: {fileID: 5356400354427446076, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
+  stepPrefabParent: {fileID: 71361840}
   loadButton: {fileID: 1939426525}
   resetButton: {fileID: 2018504527}
   stopButton: {fileID: 257052984}

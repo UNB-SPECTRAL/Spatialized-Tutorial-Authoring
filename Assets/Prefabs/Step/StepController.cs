@@ -1,42 +1,50 @@
 using System;
-using System.Diagnostics.Contracts;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
 using UnityEngine;
 using UnityEngine.Video;
 
+/*** Import Helpers ***/
+using StepDetails = RecordSceneController.StepStore.StepDetails;
+
 /**
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
  */
-public class VideoToolTipController : MonoBehaviour {
-  public RecordSceneController.ToolTipDetails toolTipDetails;
-  public VideoPlayer                          videoPlayer;
+public class StepController : MonoBehaviour {
+  public StepDetails stepDetails;
+  public VideoPlayer videoPlayer;
+  
+  private ToolTip _toolTip;
 
   void Awake() {
     // Error handling in case this controller is added to a GameObject which doe snot have a ToolTip component.
     // This is required since this Controller is specifically build to be used with the ToolTip component.
     if(gameObject.GetComponent<ToolTip>() == null) {
-      Debug.LogError("VideoTutorialController requires a ToolTip component");
+      Debug.LogError("StepController requires a ToolTip component");
     }
     
     // Error handling in case this GameObject does not have an Interactable component.
     // This is required to play/pause the video when clicking on the VideoPlayer.
     if(gameObject.GetComponent<Interactable>() == null) {
-      Debug.LogError("VideoTutorialController requires an Interactable component");
+      Debug.LogError("StepController requires an Interactable component");
     }
   }
 
   void Start() {
+    /*** Component References ***/
+    _toolTip = gameObject.GetComponent<ToolTip>();
+    
     /*** ToolTip Configuration ***/
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
     // Set these properties.
-    gameObject.name = toolTipDetails.name;
-    GetComponent<ToolTip>().ToolTipText = toolTipDetails.name;
-    gameObject.transform.SetGlobalPose(toolTipDetails.globalPose);
+    // TODO: Create two fields for the GameObject name and the ToolTip text.
+    name = stepDetails.name.Split(':')[0];
+    _toolTip.ToolTipText = stepDetails.name;
+    transform.SetGlobalPose(stepDetails.globalPose);
     
-    // We must explicitly check if there is a `videoFilePath` in case this is a new ToolTip and the
+    // We must explicitly check if there is a `videoFilePath` in case this is a new Step and the
     // video is currently being recorded.
-    if(!String.IsNullOrEmpty(toolTipDetails.videoFilePath)) SetupVideoPlayer(toolTipDetails.videoFilePath);
+    if(!string.IsNullOrEmpty(stepDetails.videoFilePath)) SetupVideoPlayer(stepDetails.videoFilePath);
     // Otherwise hide the VideoPlayer.
     else videoPlayer.gameObject.SetActive(false);
   }
@@ -44,14 +52,20 @@ public class VideoToolTipController : MonoBehaviour {
   void Update() {
     // If the VideoPlayer GameObject is not active and there is a `videoFilePath` then show it.
     // And setup the video player
-    if(!videoPlayer.gameObject.activeSelf && !String.IsNullOrEmpty(toolTipDetails.videoFilePath)) {
+    if(!videoPlayer.gameObject.activeSelf && !String.IsNullOrEmpty(stepDetails.videoFilePath)) {
       videoPlayer.gameObject.SetActive(true);
-      SetupVideoPlayer(toolTipDetails.videoFilePath);
+      SetupVideoPlayer(stepDetails.videoFilePath);
     }
     
     // If the local rotation of the VideoPlayer is not 0, 0, 180 then reset it to 0, 0, 180.
     if(videoPlayer.transform.localRotation != Quaternion.Euler(0, 0, 180)) {
       videoPlayer.transform.localRotation = Quaternion.Euler(0, 0, 180);
+    }
+    
+    /*** Update Text ***/
+    // If the current ToolTip text does not match the StepDetails.name field, update it.
+    if(_toolTip.ToolTipText != stepDetails.name) {
+      _toolTip.ToolTipText = stepDetails.name;
     }
   }
   
@@ -87,7 +101,7 @@ public class VideoToolTipController : MonoBehaviour {
       // When setting up the VideoPlayer we want to be notified when the video
       // is ended to notify the RecordSceneController.
       videoPlayer.loopPointReached += (source) => {
-        Debug.Log("Tooltip " + toolTipDetails.name + " video ended");
+        Debug.Log(stepDetails.name.Split(':')[0] + " video ended");
         RecordSceneController.Instance.state = RecordSceneController.State.Idle;
       };
     }));
@@ -100,7 +114,7 @@ public class VideoToolTipController : MonoBehaviour {
    */
   public void OnClick() {
     // FIXME: Logging since there seems to be multiple clicks on a ToolTip
-    Debug.Log("ToolTip " + toolTipDetails.name + " Clicked");
+    Debug.Log(stepDetails.name.Split(':')[0] + " Clicked");
     
     // When the RecordSceneController is in RECORDING state, exit
     if(RecordSceneController.CurrentState == RecordSceneController.State.Recording) {
@@ -126,7 +140,7 @@ public class VideoToolTipController : MonoBehaviour {
     // pause the VideoPlayer.
     else if(
         RecordSceneController.CurrentState == RecordSceneController.State.Playing
-        && videoPlayer.isPlaying == true
+        && videoPlayer.isPlaying
       ) {
       // Notify the RecordSceneController that a video is not playing
       RecordSceneController.Instance.state = RecordSceneController.State.Idle;
