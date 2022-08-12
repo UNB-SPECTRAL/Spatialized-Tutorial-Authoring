@@ -4,12 +4,17 @@ using System.IO;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
-using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
+  #region Public Static Variables
+  // Static reference to the current instance of the class.
+  public static RecordSceneController Instance;
+  public static State CurrentState { get => Instance.state; }
+  #endregion
+   
   #region Public Variables
   // Represents the prefab to render when marking a location.
   public GameObject tooltipPrefab;
@@ -17,20 +22,53 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   public Transform mixedRealityPlayspace;
 
   [Header("Buttons")] 
-  public GameObject load;
-  public GameObject reset;
-  public GameObject stop;
+  public GameObject loadButton;
+  public GameObject resetButton;
+  public GameObject stopButton;
+
+  // Represents the RecordScene state. A user can either be idle, playing a video or recording a video.
+  // Each state can only perform certain actions.
+  // @default Idle
+  [HideInInspector]
+  public State state = State.Idle;
+  public enum State {
+    // When a video is being recorded.
+    Recording,
+    // When a video is being played.
+    Playing,
+    Idle,
+  }
   #endregion
 
   #region Private Variables
   // Reference to the ToolTip Store.
-  private readonly ToolTipStore _toolTipStore;
+  private ToolTipStore _toolTipStore;
   #endregion
+  
+  #region Unity Methods
+  void Awake() {
+    if(Instance == null) {
+      // Save the reference to the instance
+      Instance = this;
+      // Load ToolTip data from storage
+      // TODO: Rename this.
+      _toolTipStore = GetData();
+    }
+    else Destroy(this);
+  }
 
-  #region Constructor
-  public RecordSceneController() {
-    // When instantiating this class, load all the anchors from storage.
-    _toolTipStore = GetData();
+  void Update() {
+    // Handle showing the "Reset" and "Load" buttons when not in RECORDING state
+    if (state == State.Recording) {
+      loadButton.SetActive(false);
+      resetButton.SetActive(false);
+      stopButton.SetActive(true);
+    }
+    else {
+      loadButton.SetActive(true);
+      resetButton.SetActive(true);
+      stopButton.SetActive(false);
+    }
   }
   #endregion
 
@@ -49,20 +87,42 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion InputSystemGlobalHandlerListener Implementation
 
   #region IMixedRealityPointerHandler
-  /** When clicking, mark the location as if the user said "Mark" */
+  /**
+   * In IDLE state, when clicking on any surface except another ToolTip, create a new ToolTip at that location
+   * and start recording a video.
+   */
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
-    Debug.Log("OnPointerClicked");
-      
-    // Once a click event is received, we capture the hit location and rotation to create a Pose.
-    Vector3    position = eventData.Pointer.Result.Details.Point;
-    Quaternion rotation = eventData.Pointer.Rotation;
-    Pose       pose  = new Pose(position, rotation);
-
-    // Create a ToolTip at the pose
-    GameObject toolTip = CreateToolTip(pose);
+    // If we are not in the Idle State, don't do anything.
+    if (state != State.Idle) {
+      Debug.Log("OnPointerClicked: Not in Idle State"); 
+    } else {
+      // Log for debugging.
+      Debug.Log("OnPointerClicked: Success");
     
-    // Start recording
-    StartRecording(toolTip);
+      // If the user clicked on a ToolTip, do not create a new one.
+      GameObject clickedGo = eventData.Pointer.Result.CurrentPointerTarget;
+      if (clickedGo != null && clickedGo.GetComponentInParent<ToolTip>() != null) {
+        Debug.Log("OnPointerClicked: Clicked on a ToolTip. Exiting");
+        return; 
+      }
+
+      // Once a click event is received, we capture the hit location and rotation to create a Pose.
+      Vector3    position = eventData.Pointer.Result.Details.Point;
+      Quaternion rotation = eventData.Pointer.Rotation;
+      Pose       pose     = new Pose(position, rotation);
+
+      // Create a ToolTip at the pose
+      TooltipDetails tooltipDetails = new TooltipDetails() {
+        globalPose = pose
+      };
+      InstantiateToolTip(tooltipDetails);
+    
+      // Save the ToolTip to the storage
+      _toolTipStore.Add(tooltipDetails);
+    
+      // Start recording
+      StartRecording(tooltipDetails);
+    }
   }
 
   public void OnPointerDown(MixedRealityPointerEventData eventData) {}
@@ -74,45 +134,49 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   
   #region Private Methods
   /** Given a pose, create a ToolTip and save it to disks */
-  private GameObject CreateToolTip(Pose pose) {
+  private GameObject InstantiateToolTip(TooltipDetails tooltipDetails) {
     // Instantiate a ToolTip component with it's parent being the MixedRealityPlayspace
     // TODO: Does this still have to be the case? Maybe we can move it under it's own GameObject?
     GameObject toolTipGo = Instantiate(tooltipPrefab, mixedRealityPlayspace);
     
-    // Configure the ToolTip
-    toolTipGo.name                                = "Tooltip " + (_toolTipStore.Count() + 1);
-    toolTipGo.GetComponent<ToolTip>().ToolTipText = toolTipGo.name;
-    toolTipGo.transform.SetGlobalPose(pose);
+    // If the name is missing, generate a unique name
+    if (String.IsNullOrEmpty(tooltipDetails.name)) {
+      tooltipDetails.name = "Tooltip " + (_toolTipStore.Count() + 1);
+    }
     
+    // Configure the ToolTip
+    toolTipGo.GetComponent<VideoToolTipController>().tooltipDetails = tooltipDetails;
+
     // Add world locking
     // TODO: Is this needed anymore?
     toolTipGo.AddComponent<ToggleWorldAnchor>().AlwaysLock = true;
 
-    // Save the ToolTip to the storage
-    _toolTipStore.Add(toolTipGo);
-
     return toolTipGo;
   }
   
-  /** Given a ToolTip, start recording a video for it */
-  private void StartRecording(GameObject toolTip) {
-    // Hide the Reset and Load buttons
-    reset.SetActive(false);
-    load.SetActive(false);
-    stop.SetActive(true);
-    
-    // Start the recording and save the video to a file with the same name as the toolTip.
+  /** Given a ToolTipDetail, start recording a video for it */
+  private void StartRecording(TooltipDetails toolTipDetails) {
+    // Change the state to RECORDING
+    state = State.Recording;
+
+    // Start the recording and pass the name of the file which is the same name as the toolTip.
     // e.g. "tooltip_1.mp4" since we remove spaces, capitalization and add a .mp4 extension.
-    string sanitizedFilePath = VideoRecordingProvider.Start(toolTip.name);
-    
-    // While the recording is in progress, associated the video file path with the tooltip
-    _toolTipStore.UpdateVideoFilePath(toolTip, sanitizedFilePath);
+    VideoRecordingProvider.Start(toolTipDetails.name);
   }
   #endregion
   
   #region Public Methods
-  /** When the user says "Mark", this will create a ToolTip at the primary pointer pose and start recording */
+  /**
+   * When in IDLE state and the user says the keyword "Mark", create a ToolTip
+   * at the current location ans start a recording.
+   */
   public void Mark() {
+    // If we are not in the Idle State, don't do anything.
+    if (state != State.Idle) {
+      Debug.Log("Speech Recognized: \"Mark\": Not in Idle State");
+      return;
+    }
+    
     Debug.Log("Speech Recognized: \"Mark\"");
     
     // Get the pose for the primary pointer when saying "Mark".
@@ -121,21 +185,37 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Pose       pose     = new Pose(position, rotation);
     
     // Create a ToolTip at the pose
-    GameObject toolTip = CreateToolTip(pose);
+    TooltipDetails tooltipDetails = new TooltipDetails() {
+      globalPose = pose
+    };
+    InstantiateToolTip(tooltipDetails);
+    
+    // Save the ToolTip to the storage
+    _toolTipStore.Add(tooltipDetails);
     
     // Start recording
-    StartRecording(toolTip);
+    StartRecording(tooltipDetails);
   }
   
-  /** When the user says "End Marking", this will stop the recording */
+  /**
+   * When the user is in RECORD state, stop recording and save the video to the storage.
+   */
   public void EndMarking() {
-    // Show the Reset and Load buttons
-    reset.SetActive(true);
-    load.SetActive(true);
-    stop.SetActive(false);
-    
+    if (state != State.Recording) {
+      Debug.Log("Speech Recognized: \"End Marking\": Not in Recording State");
+      return;  
+    }
+
     Debug.Log("Speech Recognized: \"End Marking\"");
-    VideoRecordingProvider.Stop();
+
+    // When stopping the video, store the video file path to the ToolTip.
+    string videoFilePath = VideoRecordingProvider.Stop();
+
+    // Once the video has been stopped, change the state to IDLE.
+    state = State.Idle;
+
+    // While the recording is in progress, associated the video file path with the tooltip
+    _toolTipStore.UpdateVideoFilePath(_toolTipStore.GetLastToolTip(), videoFilePath);
   }
   
   /** Instantiate ToolTips from store */
@@ -156,16 +236,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       // Otherwise, instantiate it.
       else {
         // Instantiate the tooltip using the given prefab and set its parent to the playspace.
-        GameObject newTooltip = Instantiate(tooltipPrefab, mixedRealityPlayspace);
-        // Name the tooltip
-        newTooltip.name = toolTipDetails.name;
-        // Set it's pose
-        newTooltip.transform.SetGlobalPose(toolTipDetails.globalPose);
-        // And world lock it.
-        ToggleWorldAnchor twa = newTooltip.AddComponent<ToggleWorldAnchor>();
-        twa.AlwaysLock = true;
-        // And add text
-        newTooltip.GetComponent<ToolTip>().ToolTipText = toolTipDetails.name;
+        InstantiateToolTip(toolTipDetails);
       }
     }
   }
@@ -218,11 +289,8 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     public TooltipDetails GetLastToolTip() => tooltipDetails[tooltipDetails.Count - 1];
   
     /** Add a new ToolTip to the store and saves it to disk */
-    public void Add(GameObject toolTip) {
-      tooltipDetails.Add(new TooltipDetails {
-        name       = toolTip.name,
-        globalPose = toolTip.transform.GetGlobalPose()
-      });
+    public void Add(TooltipDetails toolTipDetails) {
+      tooltipDetails.Add(toolTipDetails);
       
       // Save the data to disk
       string filePath       = Path.Combine(Application.streamingAssetsPath, fileName);
@@ -231,9 +299,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
     
     /** Update the video file path for a ToolTip */
-    public void UpdateVideoFilePath(GameObject toolTip, string videoFilePath) {
+    public void UpdateVideoFilePath(TooltipDetails toolTipDetails, string videoFilePath) {
       // Find the tooltip in the store
-      TooltipDetails tooltipDetails = this.tooltipDetails.Find(td => td.name == toolTip.name);
+      TooltipDetails tooltipDetails = this.tooltipDetails.Find(td => td.name == toolTipDetails.name);
       
       // Update the value
       tooltipDetails.videoFilePath = videoFilePath;

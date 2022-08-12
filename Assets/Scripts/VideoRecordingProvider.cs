@@ -13,12 +13,12 @@ public class VideoRecordingProvider : MonoBehaviour {
   public static bool IsRecording; // Whether or not the video is currently being recorded.
   #endregion
   
-  
   #region Private Static Variables
   private static VideoRecordingProvider _instance; // Used for`_instance.StartCoroutine`
   
   private static VideoCapture _videoCapture; // Can only have one active at a time
   private static string       _fileName; // Name of the file to save to
+  private static string       _filePath; // Name of the file to save to
 
   private static Resolution[] _cameraResolutions; // The resolutions that the camera can support
   private static Resolution   _cameraResolution; // The best camera resolution found.
@@ -60,32 +60,36 @@ public class VideoRecordingProvider : MonoBehaviour {
   #endregion
 
   #region Public Static Methods
-  public static string Start(string fileName) {
+  public static void Start(string fileName) {
     if (_videoCapture is { IsRecording: true }) {
       Debug.LogError("VideoRecorder.StartRecording: There is already a recording in progress");
-      return null;
+      return;
     }
 
     if (string.IsNullOrEmpty(fileName)) {
       Debug.LogError("VideoRecorder.StartRecording: Missing file name");
-      return null;
+      return;
     }
 
     // Sanitize the filename by replacing spaces with underscores and lower casing the string
     _fileName = fileName.Replace(" ", "_").ToLower() + ".mp4";
+    // Generate and save the file path
+    _filePath = Path.Combine(Application.streamingAssetsPath, _fileName);
+    
     // Start the video capture process
     VideoCapture.CreateAsync(OnCreateAsync);
-    // Return the filename to the caller
-    return Path.Combine(Application.streamingAssetsPath, _fileName);
   }
   
-  public static void Stop() {
+  /** Stops the video recording and return the file path to the video. */
+  public static string Stop() {
     if (_videoCapture is { IsRecording: false }) {
       Debug.LogError("VideoRecorder.StopRecording: There is no recording in progress");
-      return;
+      return null;
     }
     // Stop the video capture process
     _videoCapture.StopRecordingAsync(OnStopRecordingAsync);
+
+    return _filePath;
   }
   #endregion
 
@@ -149,7 +153,10 @@ public class VideoRecordingProvider : MonoBehaviour {
 
   private static void OnStopVideoModeAsync(VideoCapture.VideoCaptureResult result) {
     _videoCapture.Dispose();
+    
     _videoCapture = null;
+    _fileName = null;
+    _filePath = null;
   }
   #endregion
 
