@@ -4917,7 +4917,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 250907777}
         m_TargetAssemblyTypeName: RecordSceneController, Assembly-CSharp
-        m_MethodName: ResetTooltips
+        m_MethodName: ResetSteps
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

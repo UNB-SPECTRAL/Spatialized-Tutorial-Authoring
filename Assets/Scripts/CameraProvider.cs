@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -11,6 +12,7 @@ public class CameraProvider : MonoBehaviour {
   public static bool IsRecording;
   #endregion
   
+  /** Private Static Variables */
   #region Private Static Variables
   private static CameraProvider _instance; // Used for`_instance.StartCoroutine`
   
@@ -31,20 +33,23 @@ public class CameraProvider : MonoBehaviour {
 
   #region Unity Methods
   private void Awake() {
+    /*** Validation ***/
     // Check if this script it attached to the `Main Camera` game object
     if (gameObject.name != "Main Camera") {
-      Debug.LogError("VideoRecordingProvider must be attached to the `Main Camera` game object");
-      Destroy(gameObject);
+      Debug.LogError("CameraProvider must be attached to the `Main Camera` Game Object");
+      throw new Exception("CameraProvider must be attached to the `Main Camera` Game Object");
       return;
+    }
+    
+    // Check if there is a Microphone available for recording
+    if (!Microphone.devices.Any()) {
+      Debug.LogError("CameraProvider requires that a Microphone is available");
+      throw new Exception("CameraProvider requires that a Microphone is available");
     }
 
     // Then save a reference to the instance of this script
-    if (_instance == null) {
-      _instance = this;
-    }
-    else {
-      Destroy(gameObject);
-    }
+    if (_instance == null) _instance = this;
+    else Destroy(gameObject);
   }
   
   /** This Unity method determines the best camera resolution that is at least 30FPS that the camera can support. */
