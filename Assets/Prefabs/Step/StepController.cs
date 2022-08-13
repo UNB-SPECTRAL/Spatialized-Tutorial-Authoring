@@ -14,7 +14,7 @@ public class StepController : MonoBehaviour {
   public StepDetails stepDetails;
   public VideoPlayer videoPlayer;
   
-  private ToolTip _toolTip;
+  private ToolTip   _toolTip;
 
   void Awake() {
     // Error handling in case this controller is added to a GameObject which doe snot have a ToolTip component.
@@ -33,17 +33,16 @@ public class StepController : MonoBehaviour {
   void Start() {
     /*** Component References ***/
     _toolTip = gameObject.GetComponent<ToolTip>();
-    
-    /*** ToolTip Configuration ***/
+
+    /*** Step Configuration ***/
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
     // Set these properties.
-    // TODO: Create two fields for the GameObject name and the ToolTip text.
-    name = stepDetails.name.Split(':')[0];
+    name                 = "Step " + stepDetails.id;
     _toolTip.ToolTipText = stepDetails.name;
     transform.SetGlobalPose(stepDetails.globalPose);
-    
-    // We must explicitly check if there is a `videoFilePath` in case this is a new Step and the
-    // video is currently being recorded.
+
+    // We must explicitly check if there is a `videoFilePath` in case this is a
+    // new Step and the video is currently being recorded.
     if(!string.IsNullOrEmpty(stepDetails.videoFilePath)) SetupVideoPlayer(stepDetails.videoFilePath);
     // Otherwise hide the VideoPlayer.
     else videoPlayer.gameObject.SetActive(false);
@@ -71,10 +70,12 @@ public class StepController : MonoBehaviour {
   
   /** Given a url, setup the VideoPlayer with a thumbnail image. */
   void SetupVideoPlayer(string url) {
-    videoPlayer.url         = url;
-    videoPlayer.aspectRatio = VideoAspectRatio.FitInside;
-    // TODO: Might need this when rendering on the HoloLens.
-    // videoPlayer.targetCameraAlpha = 0.5f;
+    videoPlayer.url               = url;
+    videoPlayer.aspectRatio       = VideoAspectRatio.FitInside;
+    // TODO: What we can do in the future is just render an image component above or something
+    // so that we can show the thumbnail image while we load out the video.
+    //videoPlayer.renderMode        = VideoRenderMode.APIOnly; 
+    videoPlayer.targetCameraAlpha = 0.5f;
 
     // BUG: Rotate the video since its playing upside down for some reason.
     videoPlayer.transform.rotation = Quaternion.Euler(videoPlayer.transform.rotation.x, videoPlayer.transform.rotation.y, 180);
@@ -82,27 +83,61 @@ public class StepController : MonoBehaviour {
     // Finally generate a thumbnail of the video after ToolTip script has completed (wait 0.2s)
     // BUG: The ToolTip prefab is somehow disabling the VideoPlayer and causing an "Cannot Prepare a disabled VideoPlayer" error.
     StartCoroutine(Utilities.WaitForSecondsAnd(0.2f, () => {
-      // The step required to generate a video thumbnail based on the first frame of the video.
+      // To generate a thumbnail, we are essentially preparing the video (similar
+      // to pressing play) then pausing the video (which renders the first frame)
+      // and then showing the videoPlayer mesh.
+      // A more performant approach would be to follow the link below with
+      // updating the frame and saving this as an image to the unpreparing the
+      // video afterwards. TODO: Reference HoloVision to see how they did it.
       // This code was inspired by: https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687
-      videoPlayer.Stop();
-      videoPlayer.renderMode = VideoRenderMode.APIOnly;
+      // https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687/
+      // https://stackoverflow.com/questions/68232628/white-frame-before-video-plays-in-unity-instead-of-a-custom-thumbnail
+      // https://forum.unity.com/threads/create-thumbnail-from-video.769655/
+      // https://forum.unity.com/threads/how-to-get-video-thumbnails-without-running-the-video.753419/
+
+      // Preparing the video so that we can load the first frame
       videoPlayer.Prepare();
       videoPlayer.prepareCompleted += (source) => {
-        // Debug.Log("Video prepared");
+        Debug.Log("Video prepared");
+        
+        // This renders the first frame of the video onto the VideoPlayer mesh.
         videoPlayer.Pause();
+        
+        // Once prepared we render the videoPlayer again
+        videoPlayer.GetComponent<Renderer>().enabled = true;
       };
-      videoPlayer.sendFrameReadyEvents = true;
+      
+      // This worked when in APIOnly Mode.
+      /*videoPlayer.sendFrameReadyEvents = true;
       videoPlayer.frameReady += (source, frameIndex) => {
-        // Debug.Log("Frame Ready");
-        var thumbnail = source.texture;
+        Debug.Log("Frame " + frameIndex + " Ready");
+        
+        // Once a frame is ready, we use it to extract a thumbnail image.
+        // TODO: An optimization could be to generate a thumbnail image .jpg
+        // so that we don't have to load all the videos.
+        var thumbnail                                             = source.texture;
         videoPlayer.GetComponent<Renderer>().material.mainTexture = thumbnail;
-      };
+      };*/
       
       // When setting up the VideoPlayer we want to be notified when the video
       // is ended to notify the RecordSceneController.
       videoPlayer.loopPointReached += (source) => {
-        Debug.Log(stepDetails.name.Split(':')[0] + " video ended");
+        Debug.Log("Step " + stepDetails.id + " video ended. Stopping video.");
+        
+        // Update the RecordSceneState so other videos can be played
         RecordSceneController.Instance.state = RecordSceneController.State.Idle;
+        
+        // Once the video is done, render the first frame again.
+        videoPlayer.frame = 0;
+        
+        // Stop the video
+        // TODO: This was trying to un-prepare the video to save on RAM.
+        // Note that Stop will remove it from memory.
+        // See https://forum.unity.com/threads/close-video-player-and-free-memory.491749/
+        // videoPlayer.Stop();
+        
+        // Add the thumbnail to the Step
+        // videoPlayer.GetComponent<Renderer>().material.mainTexture = _thumbnail;
       };
     }));
   }
