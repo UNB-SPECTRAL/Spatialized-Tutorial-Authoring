@@ -14,7 +14,7 @@ public class ButtonStopController : MonoBehaviour {
   // Update is called once per frame
   void Update() {
     // Flash the button icon if a recording is in progress.
-    if (VideoRecordingProvider.IsRecording) BlinkIcon();
+    if (CameraProvider.IsRecording) BlinkIcon();
     else {
       timer                    = 0;
       iconMeshRenderer.enabled = true;

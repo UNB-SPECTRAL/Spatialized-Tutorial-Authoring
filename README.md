@@ -1,5 +1,5 @@
 <div align="center">
-   <h1>Spatial Tut0rials</h1>
+   <h1>Spatial Tutorials</h1>
 
    <p>Experiment using the Mircrosoft HoloLens to validate whether spatialized tutorials offer an advantage.</p>
 
@@ -98,3 +98,8 @@ To resolve this, you must restart the HoloLens by following these steps:
 3. Wait 3 seconds
 4. Then press the power button again (do not hold)
 5. Validate that the HoloLens home button it working. If not, go back to Step #2 as the power button may not have been held down long enough.
+
+### Microsoft Device Portal Login
+
+Username: Scott Bateman
+Password: 1234567

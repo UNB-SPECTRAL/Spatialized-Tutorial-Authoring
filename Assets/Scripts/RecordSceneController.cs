@@ -30,7 +30,8 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   public static State CurrentState => Instance.state;
   #endregion
-   
+
+
   #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
   public GameObject stepPrefab;
@@ -76,15 +77,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion
 
   #region Private Variables
-  /**
-   * Instance reference to the ToolTipStore.
-   *
-   * TODO: This should be moved into it's own file. Something like `ToolTipStore.data.cs` where the
-   * `.data` extension specifies that this will be stored in Streaming Assets. This can be observable
-   * as well so anytime that we call `set` we update the persistent stored version.
-   */
   private StepStore _stepStore;
-  
   /** Reference to the DictationHandler script which is used to toggle speech-to-text */
   private DictationHandler _dictationHandler;
   #endregion
@@ -96,15 +89,12 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Load the ToolTipStore from storage.
    */
   private void Awake() {
-    if(Instance == null) {
-      // Save the reference to the instance
-      Instance = this;
-      // Load ToolTip data from storage
-      // TODO: Rename this.
-      _stepStore = StepStore.Load();
-    }
+    if(Instance == null) Instance = this;
     else Destroy(this);
     
+    /*** Load Steps ***/
+    _stepStore = StepStore.Load();
+
     /*** Component Validation ***/
     // Validate that it has a SpeechHandler
     if(GetComponent<SpeechInputHandler>() == null) {
@@ -133,7 +123,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * In the Unity Update method, we do the following actions:
    * - Handle the active states of the three UI buttons based on the RECORDING state.
    */
-  void Update() {
+  private void Update() {
     // Handle showing the "Reset" and "Load" buttons when not in RECORDING state
     if (state == State.Recording) {
       loadButton.SetActive(false);
@@ -188,18 +178,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       Vector3    position = eventData.Pointer.Result.Details.Point;
       Quaternion rotation = eventData.Pointer.Rotation;
       Pose       pose     = new Pose(position, rotation);
-
-      // Create a ToolTip at the pose
-      StepDetails stepDetails = new StepDetails() {
-        globalPose = pose
-      };
-      InstantiateToolTip(stepDetails);
-    
-      // Save the ToolTip to the storage
-      _stepStore.Add(stepDetails);
-    
-      // Start recording
-      StartRecording(stepDetails);
+      
+      // Create a new ToolTip at the hit location.
+      CreateStep(pose);
     }
   }
 
@@ -211,17 +192,25 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion IMixedRealityPointerHandler
   
   #region Private Methods
-  /** Given a pose, create a ToolTip and save it to disks */
-  private void InstantiateToolTip(StepDetails stepDetails) {
-    // Instantiate a ToolTip component with it's parent being the MixedRealityPlayspace
-    // TODO: Does this still have to be the case? Maybe we can move it under it's own GameObject?
-    GameObject toolTipGo = Instantiate(stepPrefab, stepPrefabParent);
+  
+  /** Creates a Step, Instantiates it in the scene and start's recording. */
+  private void CreateStep(Pose pose) {
+    Debug.Log("CreateStep");
+    // Add the Step to the StepStore
+    StepDetails stepDetails = _stepStore.Add(pose);
+
+    // Create the Step GameObject
+    InstantiateStep(stepDetails);
     
-    // If the name is missing, generate a unique name
-    if (String.IsNullOrEmpty(stepDetails.name)) {
-      stepDetails.name = "Step " + (_stepStore.Count + 1);
-    }
-    
+    // Start recording
+    StartRecording(stepDetails);
+  }
+
+  /** Given StepDetails, instantiate a Step in the scene. */
+  private void InstantiateStep(StepDetails stepDetails) {
+    // Instantiate the Step GameObject with the correct parent.
+    var toolTipGo = Instantiate(stepPrefab, stepPrefabParent);
+
     // Configure the ToolTip
     toolTipGo.GetComponent<StepController>().stepDetails = stepDetails;
 
@@ -244,7 +233,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     
     /*** Start Recording ***/
     // Start video recording (pass along the filename)
-    VideoRecordingProvider.StartRecording(stepDetails.name);
+    CameraProvider.StartRecording(stepDetails.name);
     // Start a dictation recording
     _dictationHandler.StartRecording(); 
   }
@@ -269,17 +258,8 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
     Pose       pose     = new Pose(position, rotation);
     
-    // Create a ToolTip at the pose
-    StepDetails stepDetails = new StepDetails() {
-      globalPose = pose
-    };
-    InstantiateToolTip(stepDetails);
-    
-    // Save the ToolTip to the storage
-    _stepStore.Add(stepDetails);
-    
-    // Start recording
-    StartRecording(stepDetails);
+    // Create a Step and start recording.
+    CreateStep(pose);
   }
   
   /**
@@ -287,15 +267,15 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   public void EndMarking() {
     if (state != State.Recording) {
-      Debug.Log("Speech Recognized: \"End Marking\": Not in Recording State");
+      Debug.Log("End Marking: Not in Recording State");
       return;  
     }
 
-    Debug.Log("Speech Recognized: \"End Marking\"");
+    Debug.Log("End Marking");
     
     /*** Stop Recording ***/
     // Stop video recording (this method returns the file path of the video)
-    string videoFilePath = VideoRecordingProvider.StopRecording();
+    string videoFilePath = CameraProvider.StopRecording();
     // Stop the dictation recording
     _dictationHandler.StopRecording();
     
@@ -304,7 +284,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     state = State.Idle;
 
     // While the recording is in progress, associated the video file path with the tooltip
-    _stepStore.UpdateLastTooltipVideoFilePath(videoFilePath);
+    _stepStore.UpdateLastStep("videoFilePath", videoFilePath);
   }
   
   /** Instantiate ToolTips from store */
@@ -325,13 +305,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       
       // Otherwise, instantiate it.
       // Instantiate the tooltip using the given prefab and set its parent to the playspace.
-        InstantiateToolTip(toolTipDetails);
+      InstantiateStep(toolTipDetails);
     }
   }
 
-  /** Reset ToolTip data (on disk as well) and delete all tooltip recordings. */
-  public void ResetTooltips() {
-    // Reset the ToolTipStore and persist it.
+  /** Reset step data and remove steps in scene. */
+  public void ResetSteps() {
+    // Reset the StepStore
     _stepStore.Reset();
 
     // Delete all files in the Streaming Assets directory.
@@ -368,86 +348,70 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.Log("Dictation Complete: " + transcript);
     
     // Associate this transcript to the latest ToolTip
-    _stepStore.UpdateLastStepTranscript(transcript);
+    _stepStore.UpdateLastStep("transcript", transcript);
   }
 
   void OnDictationError(string error) {
     Debug.LogError("DictationHandler Error: " + error);
   }
-
   #endregion
-
-  #region Serialized Classes
-  /** The model used to store Steps */
+  
+  #region Serializable
   [Serializable]
   public class StepStore {
-    /*** Public Static Variables ***/
-    /**
-     * Since this is a data file, there is a 1-1 mapping between data on disk and in memory.
-     * This field is used to associated the two.
-     *
-     * Since the this class will be serialized, we include a `.json` extension.
-     */
-    public static string FileName = "steps" + ".json";
-    
-    /*** Instance Public Variables ***/
-    /** Field which stores all the steps */
-    public List<StepDetails> steps = new List<StepDetails>();
-    
-    /*** Helpers ***/
-    public int Count => steps.Count;
-    public StepDetails GetLastStep() => steps[Count - 1];
-  
-    /** Add a new ToolTip to the store and saves it to disk */
-    public void Add(StepDetails stepDetails) {
+    private const string FileName = "steps.json";
+
+    public List<StepDetails> steps;
+
+    public StepDetails Add(Pose globalPose) {
+      Debug.Log("StepStore.Add()");
+      StepDetails stepDetails = new StepDetails() {
+        id = steps.Count + 1,
+        name = "Step " + (steps.Count + 1),
+        globalPose = globalPose,
+      };
+      
       steps.Add(stepDetails);
-      
-      // Save data to disk
+
       Save();
+
+      return stepDetails;
+    }
+
+    public StepDetails UpdateLastStep(string key, string value) {
+      var lastStepDetails = steps[steps.Count - 1];
+
+      switch (key) {
+        case "videoFilePath":
+          lastStepDetails.videoFilePath = value;
+          break;
+        case "transcript":
+          lastStepDetails.transcript = value;
+          // When updating the transcript, also update the text so that we can
+          // include 15 characters of transcript text in the UI.
+          lastStepDetails.name += ": " + value.Substring(0, (Math.Min(15, value.Length))) + "...";
+          break;
+        default:
+          throw new Exception("StepDetails does not have a key named " + key + " that can be set.");
+      }
+      
+      Save();
+
+      return lastStepDetails;
     }
     
-    /** Update the video file path for a ToolTip */
-    public void UpdateLastTooltipVideoFilePath(string videoFilePath) {
-      // Get the last ToolTip in the list
-      StepDetails lastStepDetails = GetLastStep();
-      
-      // Update the value
-      lastStepDetails.videoFilePath = videoFilePath;
-      
-      // Save data to disk
-      Save();
-    }
-    
-    public void UpdateLastStepTranscript(string transcript) {
-      StepDetails lastStepDetails = GetLastStep();
-      
-      // Update the value
-      lastStepDetails.transcript = transcript;
-      
-      // TODO: Can we make this reactive?
-      // When updating the transcript, also update the text so that we can include
-      // 20 characters of transcript text in the UI.
-      lastStepDetails.name += ": " + transcript.Substring(0, (Math.Min(16, transcript.Length))) + "...";
-      
-      // Save data to disk
-      Save();
-    }
-    
-    /** Reset this StepStore instance */
     public void Reset() {
-      steps.Clear();
+      steps = new List<StepDetails>();
+      
       Save();
     }
-    
-    /*** Persistence Helpers ***/
-    /** TODO: It would be great to have this be called when any setters are called. */
+
     private void Save() {
       string filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
       string serializedData = JsonUtility.ToJson(this, true);
       File.WriteAllText(filePath, serializedData);
     }
-  
-    /** Load the StepStore date from disk */
+
     public static StepStore Load() {
       // Try to load the data from disk since it could have been deleted.
       try {
@@ -455,7 +419,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
         string serializedData = File.ReadAllText(filePath);  
         return JsonUtility.FromJson<StepStore>(serializedData);
       } catch (FileNotFoundException) {
-        Debug.Log("No step date found. Creating new data.");
+        Debug.Log("Cannot find " + FileName + " in " + Application.streamingAssetsPath+ ". Creating new file.");
         
         // When no step data is found, we create a new instance.
         StepStore stepStore = new StepStore();
@@ -464,31 +428,20 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
         stepStore.Save();
         
         // Return the new instance.
-        return new StepStore();
+        return stepStore;
       }
     }
     
-    #region Child Class
-    /** Stores step information */
     [Serializable]
     public class StepDetails {
-      /** The name of the Step which will be shown on the Step prefab */
+      public int    id;
       public string name;
-      /** The global Unity position of the Step. This only works if using the Microsoft World Locking Toolkit */
-      public Pose globalPose;
-      /** The path to the video file */
+      public Pose   globalPose;
       public string videoFilePath;
-      /**
-     * The transcript of the recorded video.
-     *
-     * TODO: Technically the recording and video are done at the same time so
-     * there could be some text that does not make it in the video or text that
-     * is missing from the video due to timing. It would be great to send the
-     * audio from the recorded video to the DictationHandler so that they match.
-     */
-      public string transcript; // The transcript of the video.
+      public string transcript;
     }
-    #endregion
   }
+  
+  
   #endregion
 }
