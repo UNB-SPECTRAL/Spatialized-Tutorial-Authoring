@@ -37,7 +37,7 @@ public class TutorialStore {
   }
 
   /** Create a new tutorial */
-  public void AddTutorial() {
+  public void CreateTutorial() {
     // Instantiate a new tutorial using the existing count at the ID + 1.
     Tutorial tutorial = new Tutorial(tutorials.Count + 1);
     

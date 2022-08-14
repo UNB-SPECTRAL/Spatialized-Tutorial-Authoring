@@ -2,14 +2,13 @@ using System.IO;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
-using Microsoft.MixedReality.WorldLocking.Core;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /*** Import Helpers ***/
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
+using SceneState = SceneController.SceneState;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
@@ -23,39 +22,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * TODO: Determine should be the parent for correct WLT support.
    */
   public Transform stepPrefabParent;
-
-  /**
-   * Represents the state that the scene is in. This is used to make sure only certain actions can be
-   * performed during certain states. This was implemented to resolve the situation during a RECORDING
-   * state a user could "Mark" many locations. Or watch many videos at the same time.
-   */
-  [HideInInspector] 
-  public State state;
-  public enum State {
-    /**
-     * This state is the default state when rendering the scene.
-     * This state allows the user to create a tutorial and then start to record steps.
-     * This state can only move to the `CreateStep` state.
-     * @default state. 
-     */
-    CreateTutorial,
-    /**
-     * This state is when we have create a tutorial and the user is about to "Mark" and record
-     * steps.
-     * This state can transition to:
-     * - `StepRecording` state when "Mark"ing a location
-     * - `StepPlaying` state when the user clicks on a step (to view the video).
-     */
-    CreateStep,
-    /** Represents when a "Mark" action has been performed and the user is currently recording a video. */
-    StepRecording,
-    /**
-     * Represents when any video is being played. This is used so that we don't start a recording while
-     * a video is being played.
-     */
-    StepPlaying,
-    
-  }
   #endregion
   
   /***** Private Variables *****/
@@ -72,8 +38,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   private void Awake() {
     // Set the state to CreateTutorial
-    state = State.CreateTutorial;
-    Debug.Log("In State: " + state);
 
     /*** Component Validation ***/
     // Validate that it has a SpeechHandler
@@ -121,11 +85,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   /**
    * In IDLE state, when clicking on any surface except another ToolTip, create a new ToolTip at that location
    * and start recording a video.
+   *
+   * TODO: Replace this with an interaction handler with `global` mode.
    */
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
     // If we are not in the Idle State, don't do anything.
-    if (state != State.CreateStep) {
-      Debug.Log("OnPointerClicked: Not in Idle State"); 
+    if (SceneController.State != SceneState.CreateStep) {
+      Debug.Log("OnPointerClicked(): Not in Idle State"); 
     } else {
       // Log for debugging.
       Debug.Log("OnPointerClicked: Success");
@@ -196,8 +162,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   private void StartRecording(StepDetails stepDetails) {
     // Change the state to `Step Recording`
-    state = State.StepRecording;
-    Debug.Log("In State: " + state);
+    // FIXME:
+    //state = State.StepRecording;
+    //Debug.Log("In State: " + state);
     
     /*** Start Recording ***/
     // Start video recording (pass along the filename)
@@ -208,23 +175,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion
   
   #region Public Methods
-  /** When the user presses the "Start", create a new Tutorial and start recording steps */
-  public void OnCreateTutorial() {
-    // We must be in the "Create Tutorial" state.
-    if (state != State.CreateTutorial) {
-      Debug.LogError("OnCreateTutorial(): Not in \"Create Tutorial\" State. In State: " + state);
-      return;
-    }
-    
-    Debug.Log("OnCreateTutorial()");
-    
-    // Create a new tutorial
-    SceneController.TutorialStore.AddTutorial();
-    
-    // Enter into "CreateStep" state
-    state = State.CreateStep;
-    Debug.Log("In State: " + state);
-  }
 
   /**
    * When in IDLE state and the user says the keyword "Mark", create a ToolTip
@@ -232,7 +182,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   public void Mark() {
     // If we are not in the Idle State, don't do anything.
-    if (state != State.CreateStep) {
+    if (SceneController.State != SceneState.CreateStep) {
       Debug.Log("Speech Recognized: \"Mark\": Not in Idle State");
       return;
     }
@@ -252,7 +202,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * When the user is in `Recording` state, stop recording and save the video to the storage.
    */
   public void EndMarking() {
-    if (state != State.StepRecording) {
+    if (SceneController.State != SceneState.StepRecording) {
       Debug.Log("End Marking(): ERROR - Not in Recording State");
       return;  
     }
@@ -267,9 +217,10 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     
     
     /*** Update State ***/
-    // Once the recording has been stopped, change the state to `CreateStep`.
-    state = State.CreateStep;
-    Debug.Log("In State: " + state);
+    // Once the recording has been stopped, change the state to `CreateStep`
+    // FIXME:
+    // state = State.CreateStep;
+    // Debug.Log("In State: " + state);
   }
   
   /**

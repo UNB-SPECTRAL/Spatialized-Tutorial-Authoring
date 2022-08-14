@@ -108,7 +108,7 @@ public class SceneController : MonoBehaviour {
   /*** Authoring Scene ***/
   public void OnCreateTutorialButtonPress() {
     Debug.Log("OnCreateTutorialButtonPress()");
-    // TODO: Create Tutorial (via other script)
+    tutorialStore.CreateTutorial();
     state = SceneState.CreateStep;
   }
   public void OnStopTutorialButtonPress() {
@@ -118,7 +118,7 @@ public class SceneController : MonoBehaviour {
   public void OnStopStepRecordingButtonPress() {
     Debug.Log("OnStopStepRecordingButtonPress()");
     // TODO: Stop Recording Step (via other script)
-    state = SceneState.MainMenu;
+    state = SceneState.CreateStep;
   }
   
   /*** Guidance Scene ***/

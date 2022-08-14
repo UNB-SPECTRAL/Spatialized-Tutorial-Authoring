@@ -1209,7 +1209,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stepPrefab: {fileID: 5356400354427446076, guid: af1d07eb23d90c04a985002c4beca81e, type: 3}
   stepPrefabParent: {fileID: 71361840}
-  state: 2
 --- !u!4 &250907778
 Transform:
   m_ObjectHideFlags: 0
@@ -4968,7 +4967,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &652180357
 Transform:
   m_ObjectHideFlags: 0
@@ -6621,7 +6620,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &871911755
 Transform:
   m_ObjectHideFlags: 0
@@ -7408,7 +7407,6 @@ GameObject:
   m_Component:
   - component: {fileID: 986276721}
   - component: {fileID: 986276724}
-  - component: {fileID: 986276723}
   - component: {fileID: 986276722}
   m_Layer: 0
   m_Name: TextMeshPro
@@ -7528,14 +7526,6 @@ MonoBehaviour:
   _SortingLayer: 0
   _SortingLayerID: 0
   _SortingOrder: 0
---- !u!222 &986276723
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 986276720}
-  m_CullTransparentMesh: 0
 --- !u!23 &986276724
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9328,7 +9318,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1208094377
 Transform:
   m_ObjectHideFlags: 0
@@ -10609,6 +10599,8 @@ MonoBehaviour:
   stopTutorialButton: {fileID: 1310188893}
   stopStepRecordingButton: {fileID: 1550715696}
   state: 0
+  tutorialStore:
+    tutorials: []
 --- !u!4 &1377876655
 Transform:
   m_ObjectHideFlags: 0
