@@ -75,7 +75,7 @@ public class StepController : MonoBehaviour {
     // TODO: What we can do in the future is just render an image component above or something
     // so that we can show the thumbnail image while we load out the video.
     //videoPlayer.renderMode        = VideoRenderMode.APIOnly; 
-    videoPlayer.targetCameraAlpha = 0.5f;
+    videoPlayer.targetCameraAlpha = 0.8f;
 
     // BUG: Rotate the video since its playing upside down for some reason.
     videoPlayer.transform.rotation = Quaternion.Euler(videoPlayer.transform.rotation.x, videoPlayer.transform.rotation.y, 180);
@@ -99,6 +99,10 @@ public class StepController : MonoBehaviour {
       videoPlayer.Prepare();
       videoPlayer.prepareCompleted += (source) => {
         Debug.Log("Video prepared");
+        
+        // Show the first frame of the video, and not the frame 0 since on the
+        // HoloLens the first frame is a grey frame.
+        videoPlayer.frame = 1;
         
         // This renders the first frame of the video onto the VideoPlayer mesh.
         videoPlayer.Pause();
@@ -125,8 +129,9 @@ public class StepController : MonoBehaviour {
         SceneController.State = SceneController.SceneState.CreateStep ;
         Debug.Log("In State: " + SceneController.State);
         
-        // Once the video is done, render the first frame again.
-        videoPlayer.frame = 0;
+        // Once the video has ended, reset the video to show the first frame.
+        // frame = 0 is sometimes a grey frame on the HoloLens.
+        videoPlayer.frame = 1;
         
         // Stop the video
         // TODO: This was trying to un-prepare the video to save on RAM.
