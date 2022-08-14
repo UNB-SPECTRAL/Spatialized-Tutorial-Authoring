@@ -36,11 +36,19 @@ public class TutorialStore {
     }
   }
 
-  /** Create a new tutorial */
+  /** Create a new tutorial and delete existing tutorial videos */
   public void CreateTutorial() {
     // Instantiate a new tutorial using the existing count at the ID + 1.
     Tutorial tutorial = new Tutorial(tutorials.Count + 1);
     
+    // Delete existing tutorial videos that are prefixed with the new tutorial ID.
+    // Since there is sometimes remaining videos files on the HoloLens from 
+    // previous recordings on the Windows machine.
+    string[] videoFiles = Directory.GetFiles(
+      Application.streamingAssetsPath, "tutorial_" + tutorial.id + "*.mp4"
+    );
+    foreach (string videoFile in videoFiles) { File.Delete(videoFile); }
+
     tutorials.Add(tutorial);
     
     Save();
