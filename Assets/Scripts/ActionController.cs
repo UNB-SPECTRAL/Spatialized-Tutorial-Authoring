@@ -234,35 +234,26 @@ public class ActionController : MonoBehaviour {
     SceneController.State = SceneState.CreateStep;
   }
 
-  /**
-   * Instantiate ToolTips from store.
-   * TODO: Move this to the Guidance scene.
-   */
-  public void LoadTutorial(int tutorialId) {
-    Debug.Log("LoadTutorial(" + tutorialId + ")");
+  /** Render tutorial steps */
+  public void LoadTutorial(Tutorial tutorial) {
+    Debug.Log("LoadTutorial(" + tutorial.name + ")");
+    
+    // For each step in the tutorial, instantiate it to the scene.
+    foreach (StepDetails stepDetails in tutorial.steps) {
+      Debug.Log("Found Step " + stepDetails.id + " in store");
 
-    // Find the tutorial matching the tutorialId
-    Tutorial tutorial = SceneController.TutorialStore.GetTutorial(tutorialId);
-    if (tutorial == null) {
-      Debug.LogError("LoadTutorial(): ERROR - No tutorial found with id " + tutorialId);
-      return;
-    }
-
-    foreach (StepDetails toolTipDetails in tutorial.steps) {
-      Debug.Log("Found " + toolTipDetails.name.Split(':')[0] + " in store");
-
-      // Before instantiation, check if the tooltip is already in the scene.
-      GameObject existingTooltip = GameObject.Find(toolTipDetails.name);
+      // Before instantiation, check if the step is already in the scene.
+      GameObject existingStep = GameObject.Find(stepDetails.name);
 
       // If the ToolTip does exist, skip it.
-      if (existingTooltip != null) {
-        Debug.Log(toolTipDetails.name.Split(':')[0] + " already exists in scene.");
+      if (existingStep != null) {
+        Debug.Log("Step " + stepDetails.id + " already exists in scene.");
         continue;
       }
 
       // Otherwise, instantiate it.
       // Instantiate the tooltip using the given prefab and set its parent to the playspace.
-      InstantiateStep(toolTipDetails);
+      InstantiateStep(stepDetails);
     }
   }
 

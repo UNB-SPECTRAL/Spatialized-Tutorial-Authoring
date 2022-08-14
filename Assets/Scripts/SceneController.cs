@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+using Tutorial = TutorialStore.Tutorial;
+
 /** Handler for the applications menus and buttons */
 public class SceneController : MonoBehaviour {
   /***** Unity Editor *****/
@@ -17,6 +19,7 @@ public class SceneController : MonoBehaviour {
   /*** Guidance Scene ***/
   [Header("Guidance Scene")] 
   public GameObject tutorialList;
+  public GameObject tutorialListBackButton;
 
   /***** Public Variables *****/
   public enum SceneState {
@@ -28,7 +31,9 @@ public class SceneController : MonoBehaviour {
     StepRecording,
     StepPlaying,
     /* Guidance */
-    Guidance
+    Guidance, // When choosing a tutorial to play
+    TutorialViewing, // When viewing steps of a tutorial
+    TutorialStepViewing, // When viewing a step video of a tutorial
   };
 
   [HideInInspector]
@@ -38,26 +43,26 @@ public class SceneController : MonoBehaviour {
   public TutorialStore tutorialStore;
 
   /***** Static Reference *****/
-  private static SceneController _instance;
+  public static SceneController Instance;
 
   public static SceneState State {
-    get => _instance.state;
+    get => Instance.state;
     set {
-    _instance.state = value;
-    _instance.UpdateState(value);
+    Instance.state = value;
+    Instance.UpdateState(value);
     }
   }
 
-  public static TutorialStore TutorialStore => _instance.tutorialStore;
+  public static TutorialStore TutorialStore => Instance.tutorialStore;
 
   /*** Unity Methods ***/
   void Awake() {
-    if (!_instance) _instance = this;
+    if (!Instance) Instance = this;
     else Destroy(gameObject);
   }
 
   void Start() {
-    state         = SceneState.MainMenu;
+    State         = SceneState.MainMenu;
     tutorialStore = TutorialStore.Load();
   }
   
@@ -72,6 +77,7 @@ public class SceneController : MonoBehaviour {
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(false);
         break;
       case SceneState.CreateTutorial:
         mainMenu.SetActive(false);
@@ -81,6 +87,7 @@ public class SceneController : MonoBehaviour {
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(false);
         break;
       case SceneState.CreateStep:
       case SceneState.StepPlaying:
@@ -91,6 +98,7 @@ public class SceneController : MonoBehaviour {
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(false);
         break;
       case SceneState.StepRecording:
         mainMenu.SetActive(false);
@@ -100,6 +108,7 @@ public class SceneController : MonoBehaviour {
         stopStepRecordingButton.SetActive(true);
 
         tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(false);
         break;
       case SceneState.Guidance:
         Debug.Log("State: Guidance");
@@ -110,6 +119,18 @@ public class SceneController : MonoBehaviour {
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(true);
+        tutorialListBackButton.SetActive(false);
+        break;
+      case SceneState.TutorialViewing:
+        Debug.Log("State: TutorialViewing");
+        mainMenu.SetActive(false);
+
+        createTutorialButton.SetActive(false);
+        stopTutorialButton.SetActive(false);
+        stopStepRecordingButton.SetActive(false);
+
+        tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(true);
         break;
     }
   }
@@ -146,5 +167,15 @@ public class SceneController : MonoBehaviour {
   }
 
   /*** Guidance Scene ***/
-  // TODO: Add guidance button handlers
+  public void OnTutorialButtonPress(Tutorial tutorial) {
+    Debug.Log("OnTutorialButtonClick(" + tutorial.name + ")");
+    ActionController.Instance.LoadTutorial(tutorial); // Load tutorial to the scene
+    State = SceneState.TutorialViewing;
+  }
+
+  public void OnTutorialListBackButtonPress() {
+    Debug.Log("OnTutorialBackButtonPress()");
+    ActionController.Instance.RemoveSteps(); // Unload tutorial steps from the scene
+    State = SceneState.Guidance;
+  }
 }
