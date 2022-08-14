@@ -58,7 +58,6 @@ public class CameraProvider : MonoBehaviour {
     Debug.Log("Camera Resolution: " + _cameraResolution.width + "x" + _cameraResolution.height + "@" + _cameraResolution.refreshRate + "hz");
   }
   #endregion
-  
 
   #region Public Static Methods
   public static void StartRecording(string fileName) {
@@ -110,12 +109,12 @@ public class CameraProvider : MonoBehaviour {
     // Update each resolutions refresh rate (its not included in the previous call)
     for (var i = 0; i < cameraResolutions.Length; i++) {
       cameraResolutions[i].refreshRate = (int)VideoCapture.GetSupportedFrameRatesForResolution(cameraResolutions[i]).Max();
-      // Debug.Log($"Resolution: {cameraResolutions[i].width}x{cameraResolutions[i].height}@{cameraResolutions[i].refreshRate}");
+      Debug.Log($"Resolution: {cameraResolutions[i].width}x{cameraResolutions[i].height}@{cameraResolutions[i].refreshRate}");
     }
     
     // For each standard resolution, find the closest resolution that the camera can support
     foreach (var standardResolution in StandardResolutions) {
-      Resolution potentialCameraResolution = cameraResolutions.First(r => r.width == standardResolution.width && r.height == standardResolution.height);
+      Resolution potentialCameraResolution = cameraResolutions.FirstOrDefault(r => r.width == standardResolution.width && r.height == standardResolution.height);
       if(potentialCameraResolution.width != 0) {
         return potentialCameraResolution;
       }

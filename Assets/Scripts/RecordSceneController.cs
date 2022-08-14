@@ -15,7 +15,7 @@ using SceneState = SceneController.SceneState;
  *
  * TODO: Rename to ActionController. Given a state, enable/disable actions.
  */
-public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
+public class RecordSceneController : MonoBehaviour {
   
   #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
@@ -50,28 +50,19 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Set the static reference to the instantiated RecordSceneController if none exists. Otherwise, destroy this GameObject.
    * - Load the ToolTipStore from storage.
    */
-  private void Awake() {
+  void Awake() {
     if (_instance == null) _instance = this;
     else Destroy(gameObject);
+  }
 
-    /*** Component Validation ***/
-    // Validate that it has a SpeechHandler
-    if (GetComponent<SpeechInputHandler>() == null) {
-      Debug.LogError("RecordSceneController requires a SpeechInputHandler component.");
-    }
-
-    // Validate that is has a DictationHandler
-    if (GetComponent<DictationHandler>() == null) {
-      Debug.LogError("RecordSceneController requires a DictationHandler component.");
-    }
-
+  void Start() {
     /*** Component References ***/
     _speechInputHandler = GetComponent<SpeechInputHandler>();
     _interactable       = GetComponent<Interactable>();
 
-    _dictationHandler = GetComponent<DictationHandler>();
+    _dictationHandler   = GetComponent<DictationHandler>();
 
-    /*** Component Reference & Setup ***/
+    /*** Dictation Handler Event Setup ***/
     Debug.Log("Setting Up DictationHandler Callbacks");
     // Add an event listener when the DictationHandler stops recording.
     _dictationHandler.OnDictationComplete.AddListener(OnDictationComplete);
@@ -124,62 +115,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
   }
   #endregion
-
-  /** TODO: Remove this section and use the InteractionHandler Global approach */
-
-  #region InputSystemGlobalHandlerListener Implementation
-  protected override void RegisterHandlers() {
-    // ReSharper disable once Unity.NoNullPropagation
-    MixedRealityToolkit.Instance?.GetService<IMixedRealityInputSystem>()
-      ?.RegisterHandler<IMixedRealityPointerHandler>(this);
-  }
-
-  protected override void UnregisterHandlers() {
-    // ReSharper disable once Unity.NoNullPropagation
-    MixedRealityToolkit.Instance?.GetService<IMixedRealityInputSystem>()
-      ?.UnregisterHandler<IMixedRealityPointerHandler>(this);
-  }
-  #endregion InputSystemGlobalHandlerListener Implementation
-
-  #region IMixedRealityPointerHandler
-  /** TODO: If the above section is removed, this section can also be removed */
-  /**
-   * In IDLE state, when clicking on any surface except another ToolTip, create a new ToolTip at that location
-   * and start recording a video.
-   *
-   * TODO: Replace this with an interaction handler with `global` mode.
-   */
-  public void OnPointerClicked(MixedRealityPointerEventData eventData) {
-    // If we are not in the Idle State, don't do anything.
-    /*if (SceneController.State != SceneState.CreateStep) {
-      Debug.Log("OnPointerClicked(): Not in Idle State"); 
-    } else {
-      // Log for debugging.
-      Debug.Log("OnPointerClicked: Success");
-    
-      // If the user clicked on a ToolTip, do not create a new one.
-      GameObject clickedGo = eventData.Pointer.Result.CurrentPointerTarget;
-      if (clickedGo != null && clickedGo.GetComponentInParent<ToolTip>() != null) {
-        Debug.Log("OnPointerClicked: Clicked on a ToolTip. Exiting");
-        return; 
-      }
-
-      // Once a click event is received, we capture the hit location and rotation to create a Pose.
-      Vector3    position = eventData.Pointer.Result.Details.Point;
-      Quaternion rotation = eventData.Pointer.Rotation;
-      Pose       pose     = new Pose(position, rotation);
-      
-      // Create a new ToolTip at the hit location.
-      CreateStep(pose);
-    }*/
-  }
-
-  public void OnPointerDown(MixedRealityPointerEventData eventData) { }
-
-  public void OnPointerUp(MixedRealityPointerEventData eventData) { }
-
-  public void OnPointerDragged(MixedRealityPointerEventData eventData) { }
-  #endregion IMixedRealityPointerHandler
 
   #region Private Methods
   /**
@@ -248,7 +183,8 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   /** When saying "Mark" */
   public void OnVoiceCommandMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedGameObject() != null) return; // Don't allow if clicked on a game object.
+    if (ClickedButton() != null) return; // Don't allow if clicked on a game object.
+    if (ClickedStep() != null) return; // Don't allow if clicked on a Step.
 
     Debug.Log("VoiceCommandMark()");
 
@@ -258,8 +194,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   /** When "Air Click"ing */
   public void AirClickMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedGameObject() != null) { // Pass click event to child so that children elements can be clicked.
-      Interactable clickedGoInteractable = ClickedGameObject().GetComponentInParent<Interactable>();
+    if (ClickedStep() != null) { // Don't create step on another step. Pass the click along
+      StepController stepController = ClickedStep();
+      stepController.OnClick();
+      return;
+    }
+    if (ClickedButton() != null) { // Pass click event to child so that children elements can be clicked.
+      Interactable clickedGoInteractable = ClickedButton().GetComponentInParent<Interactable>();
       if (clickedGoInteractable != null) clickedGoInteractable.OnClick.Invoke();
       return;
     }
@@ -381,7 +322,24 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion
 
   /***** Private Methods *****/
-  private GameObject ClickedGameObject() {
-    return CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
+  // TODO: Maybe name this "ClickedInteractable" and pass along the click.
+  private GameObject ClickedButton() {
+    GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
+    
+    if(clickedGo != null && clickedGo.CompareTag("Button")) {
+      return clickedGo;
+    }
+
+    return null;
+  }
+  
+  private StepController ClickedStep() {
+    GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
+    
+    if( clickedGo != null && clickedGo.GetComponentInParent<StepController>() != null) {
+      return clickedGo.GetComponentInParent<StepController>();
+    }
+
+    return null;
   }
 }

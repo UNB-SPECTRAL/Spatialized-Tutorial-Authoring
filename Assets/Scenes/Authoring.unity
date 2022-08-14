@@ -1255,7 +1255,7 @@ MonoBehaviour:
             m_BoolArgument: 0
           m_CallState: 2
   persistentKeywords: 0
-  speechConfirmationTooltipPrefab: {fileID: 8046114618238072051, guid: 271778f6c957b524981067a81d238394, type: 3}
+  speechConfirmationTooltipPrefab: {fileID: 0}
 --- !u!114 &250907780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3896,7 +3896,7 @@ GameObject:
   - component: {fileID: 466055720}
   m_Layer: 0
   m_Name: Main Menu
-  m_TagString: Untagged
+  m_TagString: Button
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9778,7 +9778,7 @@ GameObject:
   - component: {fileID: 1310188895}
   m_Layer: 0
   m_Name: Stop Tutorial Button
-  m_TagString: Untagged
+  m_TagString: Button
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11321,7 +11321,7 @@ GameObject:
   - component: {fileID: 1550715698}
   m_Layer: 0
   m_Name: Stop Step Recording Button
-  m_TagString: Untagged
+  m_TagString: Button
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12365,7 +12365,7 @@ GameObject:
   - component: {fileID: 1678137453}
   m_Layer: 0
   m_Name: Create Tutorial Button
-  m_TagString: Untagged
+  m_TagString: Button
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
