@@ -44,14 +44,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * TODO: Determine should be the parent for correct WLT support.
    */
   public Transform stepPrefabParent;
-  
-  [Header("Buttons")]
-  // When this button is pressed, we create a new tutorial. It only renders in the `CreateTutorial` state.
-  public GameObject createTutorialButton;
-  /** When this button is pressed, we return back to the `Main Menu` scene */
-  public GameObject stopTutorialButton;
-  /** When this button is pressed, we stop the step recording */
-  public GameObject stopStepRecordingButton;
 
   /**
    * Represents the state that the scene is in. This is used to make sure only certain actions can be
@@ -135,37 +127,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     _dictationHandler.OnDictationHypothesis.AddListener(OnDictationHypothesis);
     // Add an event listener when the DictationHandler has an error
     _dictationHandler.OnDictationError.AddListener(OnDictationError);
-    
-    /*** Enable World Locking ***/
-    Debug.Log("Enabling World Locking Toolkit");
-    var settings = WorldLockingManager.GetInstance().Settings;
-    settings.Enabled                           = true;
-    WorldLockingManager.GetInstance().Settings = settings;
-  }
-  
-  /**
-   * In the Unity Update method, we do the following actions:
-   * - Handle the active states of the three UI buttons based on the RECORDING state.
-   */
-  private void Update() {
-    // Handle showing the "Start Tutorial" button when in the CreateTutorial state.
-    if(state == State.CreateTutorial) {
-      createTutorialButton.SetActive(true);
-      stopTutorialButton.SetActive(false);
-      stopStepRecordingButton.SetActive(false);
-    } 
-    // Handle showing the "Stop Tutorial" button when in the CreateStep or StepPlaying state.
-    else if (state == State.CreateStep || state == State.StepPlaying) {
-      createTutorialButton.SetActive(false);
-      stopTutorialButton.SetActive(true);
-      stopStepRecordingButton.SetActive(false);
-    } 
-    // Handle showing the "Stop Recording" when in the "StepRecording" state.
-    else if (state == State.StepRecording) {
-      createTutorialButton.SetActive(false);
-      stopTutorialButton.SetActive(false);
-      stopStepRecordingButton.SetActive(true);
-    }
   }
   #endregion
   
