@@ -13,22 +13,26 @@ public class SceneController : MonoBehaviour {
   public GameObject createTutorialButton;
   public GameObject stopTutorialButton;
   public GameObject stopStepRecordingButton;
-
+  
   /*** Guidance Scene ***/
-  // [Header("Guidance Scene")]
-  // TODO: Add guidance buttons.
+  [Header("Guidance Scene")] 
+  public GameObject tutorialList;
 
   /***** Public Variables *****/
   public enum SceneState {
+    /* Main Menu */
     MainMenu,
+    /* Authoring */
     CreateTutorial,
     CreateStep,
     StepRecording,
-    StepPlaying
+    StepPlaying,
+    /* Guidance */
+    Guidance
   };
 
   [HideInInspector]
-  public SceneState state;
+  private SceneState state;
 
   [HideInInspector]
   public TutorialStore tutorialStore;
@@ -38,7 +42,10 @@ public class SceneController : MonoBehaviour {
 
   public static SceneState State {
     get => _instance.state;
-    set => _instance.state = value;
+    set {
+    _instance.state = value;
+    _instance.UpdateState(value);
+    }
   }
 
   public static TutorialStore TutorialStore => _instance.tutorialStore;
@@ -53,8 +60,9 @@ public class SceneController : MonoBehaviour {
     state         = SceneState.MainMenu;
     tutorialStore = TutorialStore.Load();
   }
-
-  void Update() {
+  
+  /*** Private Methods ***/
+  void UpdateState(SceneState state) {
     switch (state) {
       case SceneState.MainMenu:
         mainMenu.SetActive(true);
@@ -63,7 +71,7 @@ public class SceneController : MonoBehaviour {
         stopTutorialButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
-        // TODO: Add guidance buttons
+        tutorialList.SetActive(false);
         break;
       case SceneState.CreateTutorial:
         mainMenu.SetActive(false);
@@ -72,7 +80,7 @@ public class SceneController : MonoBehaviour {
         stopTutorialButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
-        // TODO: Add guidance buttons
+        tutorialList.SetActive(false);
         break;
       case SceneState.CreateStep:
       case SceneState.StepPlaying:
@@ -82,7 +90,7 @@ public class SceneController : MonoBehaviour {
         stopTutorialButton.SetActive(true);
         stopStepRecordingButton.SetActive(false);
 
-        // TODO: Add guidance buttons
+        tutorialList.SetActive(false);
         break;
       case SceneState.StepRecording:
         mainMenu.SetActive(false);
@@ -91,7 +99,17 @@ public class SceneController : MonoBehaviour {
         stopTutorialButton.SetActive(false);
         stopStepRecordingButton.SetActive(true);
 
-        // TODO: Add guidance buttons
+        tutorialList.SetActive(false);
+        break;
+      case SceneState.Guidance:
+        Debug.Log("State: Guidance");
+        mainMenu.SetActive(false);
+
+        createTutorialButton.SetActive(false);
+        stopTutorialButton.SetActive(false);
+        stopStepRecordingButton.SetActive(false);
+
+        tutorialList.SetActive(true);
         break;
     }
   }
@@ -100,31 +118,31 @@ public class SceneController : MonoBehaviour {
   /*** Main Menu Scene ***/
   public void OnAuthoringButtonPress() {
     Debug.Log("OnAuthoringButtonPress()");
-    state = SceneState.CreateTutorial;
+    State = SceneState.CreateTutorial;
   }
 
   public void OnGuidanceButtonPress() {
     Debug.Log("OnGuidanceButtonPress()");
-    throw new NotImplementedException();
+    State = SceneState.Guidance;
   }
 
   /*** Authoring Scene ***/
   public void OnCreateTutorialButtonPress() {
     Debug.Log("OnCreateTutorialButtonPress()");
     tutorialStore.CreateTutorial();
-    state = SceneState.CreateStep;
+    State = SceneState.CreateStep;
   }
 
   public void OnStopTutorialButtonPress() {
     Debug.Log("OnStopTutorialButtonPress()");
     ActionController.Instance.RemoveSteps(); // Hide steps when returning to main menu.
-    state = SceneState.MainMenu;
+    State = SceneState.MainMenu;
   }
 
   public void OnStopStepRecordingButtonPress() {
     Debug.Log("OnStopStepRecordingButtonPress()");
     ActionController.Instance.EndMarking(); // End recording
-    state = SceneState.CreateStep;
+    State = SceneState.CreateStep;
   }
 
   /*** Guidance Scene ***/
