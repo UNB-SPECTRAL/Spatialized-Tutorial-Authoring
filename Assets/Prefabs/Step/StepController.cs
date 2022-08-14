@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Video;
 
 /*** Import Helpers ***/
-using StepDetails = RecordSceneController.StepStore.StepDetails;
+using StepDetails = TutorialStore.Tutorial.StepDetails;
 
 /**
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
@@ -14,7 +14,7 @@ public class StepController : MonoBehaviour {
   public StepDetails stepDetails;
   public VideoPlayer videoPlayer;
   
-  private ToolTip   _toolTip;
+  private ToolTip _toolTip;
 
   void Awake() {
     // Error handling in case this controller is added to a GameObject which doe snot have a ToolTip component.
@@ -75,7 +75,7 @@ public class StepController : MonoBehaviour {
     // TODO: What we can do in the future is just render an image component above or something
     // so that we can show the thumbnail image while we load out the video.
     //videoPlayer.renderMode        = VideoRenderMode.APIOnly; 
-    videoPlayer.targetCameraAlpha = 0.5f;
+    videoPlayer.targetCameraAlpha = 0.8f;
 
     // BUG: Rotate the video since its playing upside down for some reason.
     videoPlayer.transform.rotation = Quaternion.Euler(videoPlayer.transform.rotation.x, videoPlayer.transform.rotation.y, 180);
@@ -100,11 +100,12 @@ public class StepController : MonoBehaviour {
       videoPlayer.prepareCompleted += (source) => {
         Debug.Log("Video prepared");
         
+        // Show the first frame of the video, and not the frame 0 since on the
+        // HoloLens the first frame is a grey frame.
+        videoPlayer.frame = 1;
+        
         // This renders the first frame of the video onto the VideoPlayer mesh.
         videoPlayer.Pause();
-        
-        // Once prepared we render the videoPlayer again
-        videoPlayer.GetComponent<Renderer>().enabled = true;
       };
       
       // This worked when in APIOnly Mode.
@@ -125,10 +126,12 @@ public class StepController : MonoBehaviour {
         Debug.Log("Step " + stepDetails.id + " video ended. Stopping video.");
         
         // Update the RecordSceneState so other videos can be played
-        RecordSceneController.Instance.state = RecordSceneController.State.Idle;
+        SceneController.State = SceneController.SceneState.CreateStep ;
+        Debug.Log("In State: " + SceneController.State);
         
-        // Once the video is done, render the first frame again.
-        videoPlayer.frame = 0;
+        // Once the video has ended, reset the video to show the first frame.
+        // frame = 0 is sometimes a grey frame on the HoloLens.
+        videoPlayer.frame = 1;
         
         // Stop the video
         // TODO: This was trying to un-prepare the video to save on RAM.
@@ -152,7 +155,7 @@ public class StepController : MonoBehaviour {
     Debug.Log(stepDetails.name.Split(':')[0] + " Clicked");
     
     // When the RecordSceneController is in RECORDING state, exit
-    if(RecordSceneController.CurrentState == RecordSceneController.State.Recording) {
+    if(SceneController.State == SceneController.SceneState.StepRecording) {
       Debug.Log("Recording state, exiting");
       return;
     }
@@ -160,11 +163,12 @@ public class StepController : MonoBehaviour {
     // When the RecordSceneController is in IDLE state, AND the VideoPlayer is
     // NOT playing, then play the VideoPlayer.
     if(
-        RecordSceneController.CurrentState == RecordSceneController.State.Idle
+        SceneController.State == SceneController.SceneState.CreateStep
         && videoPlayer.isPlaying == false
       ) {
       // Notify the RecordSceneController that a video is playing
-      RecordSceneController.Instance.state = RecordSceneController.State.Playing;
+      SceneController.State = SceneController.SceneState.StepPlaying;
+      Debug.Log("In State: " + SceneController.State);
       
       Debug.Log("Video is not playing. Playing video");
       
@@ -174,11 +178,12 @@ public class StepController : MonoBehaviour {
     // IS playing, then this ToolTip must be playing the video and thus we can
     // pause the VideoPlayer.
     else if(
-        RecordSceneController.CurrentState == RecordSceneController.State.Playing
+        SceneController.State == SceneController.SceneState.StepPlaying
         && videoPlayer.isPlaying
       ) {
       // Notify the RecordSceneController that a video is not playing
-      RecordSceneController.Instance.state = RecordSceneController.State.Idle;
+      SceneController.State = SceneController.SceneState.CreateStep;
+      Debug.Log("In State: " + SceneController.State);
       
       Debug.Log("Video is playing. Pausing video");
       
@@ -186,8 +191,8 @@ public class StepController : MonoBehaviour {
     }
     else {
       Debug.Log("No case matched. Exiting");
-      Debug.Log(RecordSceneController.CurrentState);
-      Debug.Log(videoPlayer.isPlaying);  
+      Debug.Log("State: " + SceneController.State);
+      Debug.Log("IsVideoPlaying: " + videoPlayer.isPlaying);  
     }
   }
   #endregion

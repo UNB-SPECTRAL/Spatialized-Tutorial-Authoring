@@ -38,7 +38,6 @@ public class CameraProvider : MonoBehaviour {
     if (gameObject.name != "Main Camera") {
       Debug.LogError("CameraProvider must be attached to the `Main Camera` Game Object");
       throw new Exception("CameraProvider must be attached to the `Main Camera` Game Object");
-      return;
     }
     
     // Check if there is a Microphone available for recording
@@ -59,7 +58,6 @@ public class CameraProvider : MonoBehaviour {
     Debug.Log("Camera Resolution: " + _cameraResolution.width + "x" + _cameraResolution.height + "@" + _cameraResolution.refreshRate + "hz");
   }
   #endregion
-  
 
   #region Public Static Methods
   public static void StartRecording(string fileName) {
@@ -116,7 +114,7 @@ public class CameraProvider : MonoBehaviour {
     
     // For each standard resolution, find the closest resolution that the camera can support
     foreach (var standardResolution in StandardResolutions) {
-      Resolution potentialCameraResolution = cameraResolutions.First(r => r.width == standardResolution.width && r.height == standardResolution.height);
+      Resolution potentialCameraResolution = cameraResolutions.FirstOrDefault(r => r.width == standardResolution.width && r.height == standardResolution.height);
       if(potentialCameraResolution.width != 0) {
         return potentialCameraResolution;
       }
