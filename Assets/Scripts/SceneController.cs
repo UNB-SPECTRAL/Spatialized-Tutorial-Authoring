@@ -117,13 +117,13 @@ public class SceneController : MonoBehaviour {
 
   public void OnStopTutorialButtonPress() {
     Debug.Log("OnStopTutorialButtonPress()");
-    RecordSceneController.Instance.RemoveSteps(); // Hide steps when returning to main menu.
+    ActionController.Instance.RemoveSteps(); // Hide steps when returning to main menu.
     state = SceneState.MainMenu;
   }
 
   public void OnStopStepRecordingButtonPress() {
     Debug.Log("OnStopStepRecordingButtonPress()");
-    RecordSceneController.Instance.EndMarking(); // End recording
+    ActionController.Instance.EndMarking(); // End recording
     state = SceneState.CreateStep;
   }
 
