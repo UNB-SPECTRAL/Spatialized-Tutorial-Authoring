@@ -5,8 +5,15 @@ using UnityEngine;
 public class TutorialListController : MonoBehaviour {
   public GridObjectCollection gridObjectCollection;
   public GameObject           tutorialListButtonPrefab;
+  public GameObject           backButton;
   
   void Start() {
+    /*** Setup Back Button OnClick ***/
+    backButton.GetComponent<ButtonConfigHelper>().OnClick.AddListener(() => {
+      SceneController.Instance.OnTutorialListBackButtonPress();
+    });
+    
+    /*** Setup Tutorial List Buttons ***/
     var tutorials = SceneController.TutorialStore.tutorials;
     
     // For each tutorial, create a button and add it to the list.
@@ -16,7 +23,7 @@ public class TutorialListController : MonoBehaviour {
       var tutorialListButtonConfigHelper = tutorialListButton.GetComponent<ButtonConfigHelper>();
       
       tutorialListButtonConfigHelper.MainLabelText = tutorial.name;
-      tutorialListButtonConfigHelper.OnClick.AddListener(() => SceneController.Instance.OnTutorialButtonPress(tutorial));
+      tutorialListButtonConfigHelper.OnClick.AddListener(() => SceneController.Instance.OnTutorialListButtonPress(tutorial));
     }
     
     // Update the GridObjectCollection to reflect the new number of buttons.

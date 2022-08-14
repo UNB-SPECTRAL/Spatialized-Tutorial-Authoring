@@ -1,6 +1,5 @@
-using System;
 using UnityEngine;
-
+using UnityEngine.Video;
 using Tutorial = TutorialStore.Tutorial;
 
 /** Handler for the applications menus and buttons */
@@ -27,13 +26,13 @@ public class SceneController : MonoBehaviour {
     MainMenu,
     /* Authoring */
     CreateTutorial,
-    CreateStep,
-    StepRecording,
-    StepPlaying,
+    CreateStep, // When we can "Mark" a step, view a step recording or end the tutorial.
+    CreateStepRecording,
+    CreateStepPlaying,
     /* Guidance */
-    Guidance, // When choosing a tutorial to play
-    TutorialViewing, // When viewing steps of a tutorial
-    TutorialStepViewing, // When viewing a step video of a tutorial
+    ViewTutorials,    // When choosing a tutorial to view its steps
+    ViewSteps,        // When viewing steps of a tutorial
+    ViewStepPlaying,  // When viewing a step video of a tutorial
   };
 
   [HideInInspector]
@@ -90,7 +89,7 @@ public class SceneController : MonoBehaviour {
         tutorialListBackButton.SetActive(false);
         break;
       case SceneState.CreateStep:
-      case SceneState.StepPlaying:
+      case SceneState.CreateStepPlaying:
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
@@ -100,7 +99,7 @@ public class SceneController : MonoBehaviour {
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
         break;
-      case SceneState.StepRecording:
+      case SceneState.CreateStepRecording:
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
@@ -110,8 +109,8 @@ public class SceneController : MonoBehaviour {
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
         break;
-      case SceneState.Guidance:
-        Debug.Log("State: Guidance");
+      case SceneState.ViewTutorials:
+        Debug.Log("State: " + state);
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
@@ -121,8 +120,9 @@ public class SceneController : MonoBehaviour {
         tutorialList.SetActive(true);
         tutorialListBackButton.SetActive(false);
         break;
-      case SceneState.TutorialViewing:
-        Debug.Log("State: TutorialViewing");
+      case SceneState.ViewSteps:
+      case SceneState.ViewStepPlaying:
+        Debug.Log("State: " + state);
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
@@ -144,7 +144,7 @@ public class SceneController : MonoBehaviour {
 
   public void OnGuidanceButtonPress() {
     Debug.Log("OnGuidanceButtonPress()");
-    State = SceneState.Guidance;
+    State = SceneState.ViewTutorials;
   }
 
   /*** Authoring Scene ***/
@@ -167,15 +167,57 @@ public class SceneController : MonoBehaviour {
   }
 
   /*** Guidance Scene ***/
-  public void OnTutorialButtonPress(Tutorial tutorial) {
-    Debug.Log("OnTutorialButtonClick(" + tutorial.name + ")");
+  public void OnTutorialListButtonPress(Tutorial tutorial) {
+    Debug.Log("OnTutorialListButtonClick(" + tutorial.name + ")");
     ActionController.Instance.LoadTutorial(tutorial); // Load tutorial to the scene
-    State = SceneState.TutorialViewing;
+    State = SceneState.ViewSteps;
+  }
+  
+  public void OnTutorialListBackButtonPress() {
+    Debug.Log("OnTutorialListBacButtonClick()");
+    State = SceneState.MainMenu;
   }
 
-  public void OnTutorialListBackButtonPress() {
+  public void OnViewStepsBackButtonPress() {
     Debug.Log("OnTutorialBackButtonPress()");
     ActionController.Instance.RemoveSteps(); // Unload tutorial steps from the scene
-    State = SceneState.Guidance;
+    State = SceneState.ViewTutorials;
+  }
+  
+  /***** Static Helpers *****/
+  /**
+   * A step can only be clicked in the following cases:
+   * - In the "Create Step" state
+   * - In the "Create Step Playing" state while the step video is playing.
+   * - In the "View Tutorial" state (since we can view a step recording)
+   * - In the "View Step Playing" state while the step video is playing.
+   */
+  public static bool CanClickStep(VideoPlayer videoPlayer) {
+    if (State == SceneState.CreateStep || State == SceneState.ViewSteps) return true;
+    if(State == SceneState.CreateStepPlaying && videoPlayer.isPlaying) return true;
+    if (State == SceneState.ViewStepPlaying && videoPlayer.isPlaying) return true;
+    return false;
+  }
+  
+  /**
+   * When a step video is being played, update the state accordingly:
+   * - If in "Create Step", then "Create Step Playing"
+   * - if in "View Tutorial", then "View Step Playing"
+   */
+  public static void PlayingStepVideo() {
+    if (State == SceneState.CreateStep) State = SceneState.CreateStepPlaying;
+    if (State == SceneState.ViewSteps)   State = SceneState.ViewStepPlaying;
+    else Debug.LogError("PlayingStepVideo() called in an invalid state: " + State);
+  }
+  
+  /**
+   * When a step video is being paused, update the state accordingly:
+   * - If in "Create Step Playing", then "Create Step"
+   * - if in "View Step Playing", then "View Tutorial"
+   */
+  public static void PausingOrStopStepVideo() {
+    if (State == SceneState.CreateStepPlaying) State = SceneState.CreateStep;
+    if (State == SceneState.ViewStepPlaying)   State = SceneState.ViewSteps;
+    else Debug.LogError("PlayingStepVideo() called in an invalid state: " + State);
   }
 }

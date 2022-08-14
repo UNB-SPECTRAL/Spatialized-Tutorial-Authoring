@@ -102,14 +102,14 @@ public class ActionController : MonoBehaviour {
 
         break;
       }
-      case SceneState.StepRecording: {
+      case SceneState.CreateStepRecording: {
         /*** Create Step State ***/
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
         if (_interactable.enabled) _interactable.enabled             = false;
 
         break;
       }
-      case SceneState.StepPlaying: {
+      case SceneState.CreateStepPlaying: {
         /*** Create Step State ***/
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
         if (_interactable.enabled) _interactable.enabled             = false;
@@ -166,7 +166,7 @@ public class ActionController : MonoBehaviour {
    */
   private void StartRecording(StepDetails stepDetails) {
     // When recording, change the state
-    SceneController.State = SceneState.StepRecording;
+    SceneController.State = SceneState.CreateStepRecording;
 
     // Start video recording (pass along the video file name)
     Debug.Log("Video Recording: Starting");
