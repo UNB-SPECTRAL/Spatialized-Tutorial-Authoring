@@ -1,10 +1,10 @@
 using System.IO;
+using System.Linq;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Tools;
 using UnityEngine;
-
 /*** Import Helpers ***/
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
@@ -16,10 +16,11 @@ using SceneState = SceneController.SceneState;
  * TODO: Rename to ActionController. Given a state, enable/disable actions.
  */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
-  /***** Unity Editor Fields *****/
+  
   #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
   public GameObject stepPrefab;
+
   /**
    * The parent GameObject that all `tooltipPrefab`'s will be instantiated under.
    *
@@ -27,22 +28,22 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   public Transform stepPrefabParent;
   #endregion
-  
-  /***** Private Variables *****/
+
   #region Private Variables
   /*** CreateStep State ***/
   private SpeechInputHandler _speechInputHandler;
-  private Interactable       _interactable;
+
+  private Interactable _interactable;
+
   /*** StepRecording State ***/
   private DictationHandler _dictationHandler;
   #endregion
-  
-  /***** Static References *****/
+
   #region Static References
   private static RecordSceneController _instance;
   public static RecordSceneController Instance => _instance;
   #endregion
-  
+
   #region Unity Methods
   /**
    * In the Unity Awake method, we do the following actions:
@@ -52,25 +53,24 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   private void Awake() {
     if (_instance == null) _instance = this;
     else Destroy(gameObject);
-    
-    // Set the state to CreateTutorial
 
     /*** Component Validation ***/
     // Validate that it has a SpeechHandler
-    if(GetComponent<SpeechInputHandler>() == null) {
+    if (GetComponent<SpeechInputHandler>() == null) {
       Debug.LogError("RecordSceneController requires a SpeechInputHandler component.");
     }
+
     // Validate that is has a DictationHandler
     if (GetComponent<DictationHandler>() == null) {
       Debug.LogError("RecordSceneController requires a DictationHandler component.");
     }
-    
+
     /*** Component References ***/
     _speechInputHandler = GetComponent<SpeechInputHandler>();
     _interactable       = GetComponent<Interactable>();
-    
-    _dictationHandler   = GetComponent<DictationHandler>();
-    
+
+    _dictationHandler = GetComponent<DictationHandler>();
+
     /*** Component Reference & Setup ***/
     Debug.Log("Setting Up DictationHandler Callbacks");
     // Add an event listener when the DictationHandler stops recording.
@@ -83,50 +83,50 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     // Add an event listener when the DictationHandler has an error
     _dictationHandler.OnDictationError.AddListener(OnDictationError);
   }
-  
+
   void Update() {
     switch (SceneController.State) {
       case SceneState.MainMenu: {
         /*** Create Step State ***/
-        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
-        if(_interactable.enabled) _interactable.enabled             = false;
-        
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if (_interactable.enabled) _interactable.enabled             = false;
+
         break;
       }
       case SceneState.CreateTutorial: {
         /*** Create Step State ***/
-        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
-        if(_interactable.enabled) _interactable.enabled             = false;
-        
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if (_interactable.enabled) _interactable.enabled             = false;
+
         break;
       }
       case SceneState.CreateStep: {
         /*** Create Step State ***/
-        if(!_speechInputHandler.enabled) _speechInputHandler.enabled = true;
-        if(!_interactable.enabled) _interactable.enabled             = true;
-        
+        if (!_speechInputHandler.enabled) _speechInputHandler.enabled = true;
+        if (!_interactable.enabled) _interactable.enabled             = true;
+
         break;
       }
       case SceneState.StepRecording: {
         /*** Create Step State ***/
-        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
-        if(_interactable.enabled) _interactable.enabled             = false;
-        
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if (_interactable.enabled) _interactable.enabled             = false;
+
         break;
       }
       case SceneState.StepPlaying: {
         /*** Create Step State ***/
-        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
-        if(_interactable.enabled) _interactable.enabled             = false;
-        
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if (_interactable.enabled) _interactable.enabled             = false;
+
         break;
       }
     }
   }
-  
   #endregion
-  
+
   /** TODO: Remove this section and use the InteractionHandler Global approach */
+
   #region InputSystemGlobalHandlerListener Implementation
   protected override void RegisterHandlers() {
     // ReSharper disable once Unity.NoNullPropagation
@@ -140,7 +140,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       ?.UnregisterHandler<IMixedRealityPointerHandler>(this);
   }
   #endregion InputSystemGlobalHandlerListener Implementation
-  
+
   #region IMixedRealityPointerHandler
   /** TODO: If the above section is removed, this section can also be removed */
   /**
@@ -174,33 +174,32 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }*/
   }
 
-  public void OnPointerDown(MixedRealityPointerEventData eventData) {}
+  public void OnPointerDown(MixedRealityPointerEventData eventData) { }
 
-  public void OnPointerUp(MixedRealityPointerEventData eventData) {}
+  public void OnPointerUp(MixedRealityPointerEventData eventData) { }
 
-  public void OnPointerDragged(MixedRealityPointerEventData eventData) {}
+  public void OnPointerDragged(MixedRealityPointerEventData eventData) { }
   #endregion IMixedRealityPointerHandler
-  
+
   #region Private Methods
-  
   /**
    * Create a new Step for a Tutorial, instantiates that Step and
    * start a recording (video, audio).
    */
   private void CreateStep() {
     Debug.Log("CreateStep()");
-    
+
     // Get the primary pointer location
     Vector3    position = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.Details.Point;
     Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
     Pose       pose     = new Pose(position, rotation);
-    
+
     // Create a step in the TutorialSore
     StepDetails stepDetails = SceneController.TutorialStore.AddStep(pose);
 
     // Create the Step GameObject
     InstantiateStep(stepDetails);
-    
+
     // Start recording
     StartRecording(stepDetails);
   }
@@ -217,7 +216,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     // TODO: Is this needed anymore?
     toolTipGo.AddComponent<ToggleWorldAnchor>().AlwaysLock = true;
   }
-  
+
   /** Given a ToolTipDetail, start recording a video for it */
   /**
    * Once a ToolTip has been instantiated, this method is called to start the recording process.
@@ -229,11 +228,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   private void StartRecording(StepDetails stepDetails) {
     // When recording, change the state
     SceneController.State = SceneState.StepRecording;
-    
+
     // Start video recording (pass along the video file name)
-    // TODO: Turn this back on to validate RAM usage
-    // CameraProvider.StartRecording(stepDetails.name);
-    
+    Debug.Log("Video Recording: Starting");
+    int    tutorialId    = SceneController.TutorialStore.tutorials.Last().id;
+    string videoFileName = "tutorial " + tutorialId + " " + stepDetails.name;
+    CameraProvider.StartRecording(videoFileName);
+
     // Start speech-to-text recording
     // TODO: We should use the Unity Dictation API since we can dispose and release the resources.
     // TODO: Or disable this component and see if it releases the resources like the AudioClips.
@@ -241,18 +242,19 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     _dictationHandler.StartRecording();
   }
   #endregion
-  
+
   #region Public Methods
   /*** Create Step State ***/
   /** When saying "Mark" */
   public void OnVoiceCommandMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if(ClickedGameObject() != null) return; // Don't allow if clicked on a game object.
-    
+    if (ClickedGameObject() != null) return; // Don't allow if clicked on a game object.
+
     Debug.Log("VoiceCommandMark()");
-    
+
     CreateStep();
   }
+
   /** When "Air Click"ing */
   public void AirClickMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
@@ -263,36 +265,37 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
 
     Debug.Log("AirClickMark()");
-    
+
     CreateStep();
   }
-  
+
   /**
    * When the user is in `Recording` state, stop recording and save the video to the storage.
    */
   public void EndMarking() {
     Debug.Log("End Marking()");
-    
+
     /*** Stop Recording ***/
     // Stop video recording and save associate the video to the Step.
-    // TODO: Turn this back on
-    // SceneController.TutorialStore.UpdateLastStep("videoFilePath", CameraProvider.StopRecording());
+    Debug.Log("Video Recording: Stopping");
+    SceneController.TutorialStore.UpdateLastStep("videoFilePath", CameraProvider.StopRecording());
+
     // Stop the dictation recording
     Debug.Log("Speech-To-Text: Stopping");
     _dictationHandler.StopRecording();
-    
+
     /*** Update State ***/
     // Once the recording has been stopped, change the state to `CreateStep`
     SceneController.State = SceneState.CreateStep;
   }
-  
+
   /**
    * Instantiate ToolTips from store.
    * TODO: Move this to the Guidance scene.
    */
   public void LoadTutorial(int tutorialId) {
     Debug.Log("LoadTutorial(" + tutorialId + ")");
-    
+
     // Find the tutorial matching the tutorialId
     Tutorial tutorial = SceneController.TutorialStore.GetTutorial(tutorialId);
     if (tutorial == null) {
@@ -311,10 +314,19 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
         Debug.Log(toolTipDetails.name.Split(':')[0] + " already exists in scene.");
         continue;
       }
-      
+
       // Otherwise, instantiate it.
       // Instantiate the tooltip using the given prefab and set its parent to the playspace.
       InstantiateStep(toolTipDetails);
+    }
+  }
+
+  /** Remove Step GameObject from scene. */
+  public void RemoveSteps() {
+    Debug.Log("RemoveSteps()");
+    GameObject[] steps = GameObject.FindGameObjectsWithTag("Step");
+    foreach (GameObject tooltip in steps) {
+      Destroy(tooltip);
     }
   }
 
@@ -330,18 +342,15 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     foreach (string videoFile in videoFiles) {
       File.Delete(videoFile);
     }
-    
+
     // Also delete all GameObjects tagged as ToolTip so that they don't appear anymore.
-    GameObject[] tooltips = GameObject.FindGameObjectsWithTag("Step");
-    foreach (GameObject tooltip in tooltips) {
-      Destroy(tooltip);
-    }
-    
+    RemoveSteps();
+
     // Reset the TutorialStore
     SceneController.TutorialStore.Reset();
   }
   #endregion
-  
+
   #region Dictation Event Handler
   /**
    * When the DictationHandler is recording, this method will be given it's hypothesized transcript
@@ -354,7 +363,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       EndMarking();
     }
   }
-  
+
   /**
    * When `DictationHandler.StopRecording` is called, this function will be
    * given the final transcript and associate it to the last Step.
@@ -370,7 +379,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.LogError("OnDictationError: ERROR - " + error);
   }
   #endregion
-  
+
   /***** Private Methods *****/
   private GameObject ClickedGameObject() {
     return CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
