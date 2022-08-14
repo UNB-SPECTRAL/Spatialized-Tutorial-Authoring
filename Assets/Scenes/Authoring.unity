@@ -1271,7 +1271,7 @@ MonoBehaviour:
   isFocusRequired: 0
   initialSilenceTimeout: 5
   autoSilenceTimeout: 20
-  recordingTime: 3599
+  recordingTime: 300
   startRecordingOnStart: 0
   OnDictationHypothesis:
     m_PersistentCalls:

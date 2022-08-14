@@ -117,7 +117,7 @@ public class SceneController : MonoBehaviour {
   }
   public void OnStopStepRecordingButtonPress() {
     Debug.Log("OnStopStepRecordingButtonPress()");
-    // TODO: Stop Recording Step (via other script)
+    RecordSceneController.Instance.EndMarking();
     state = SceneState.CreateStep;
   }
   

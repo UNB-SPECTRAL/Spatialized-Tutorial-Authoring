@@ -37,6 +37,12 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   private DictationHandler _dictationHandler;
   #endregion
   
+  /***** Static References *****/
+  #region Static References
+  private static RecordSceneController _instance;
+  public static RecordSceneController Instance => _instance;
+  #endregion
+  
   #region Unity Methods
   /**
    * In the Unity Awake method, we do the following actions:
@@ -44,6 +50,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Load the ToolTipStore from storage.
    */
   private void Awake() {
+    if (_instance == null) _instance = this;
+    else Destroy(gameObject);
+    
     // Set the state to CreateTutorial
 
     /*** Component Validation ***/
@@ -218,80 +227,63 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Starting a speech to text (via Unity Dictation) recording
    */
   private void StartRecording(StepDetails stepDetails) {
-    // Change the state to `Step Recording`
-    // FIXME:
-    //state = State.StepRecording;
-    //Debug.Log("In State: " + state);
+    // When recording, change the state
+    SceneController.State = SceneState.StepRecording;
     
-    /*** Start Recording ***/
-    // Start video recording (pass along the filename)
-    CameraProvider.StartRecording(stepDetails.name);
-    // Start a dictation recording
-    _dictationHandler.StartRecording(); 
+    // Start video recording (pass along the video file name)
+    // TODO: Turn this back on to validate RAM usage
+    // CameraProvider.StartRecording(stepDetails.name);
+    
+    // Start speech-to-text recording
+    // TODO: We should use the Unity Dictation API since we can dispose and release the resources.
+    // TODO: Or disable this component and see if it releases the resources like the AudioClips.
+    Debug.Log("Speech-To-Text: Starting");
+    _dictationHandler.StartRecording();
   }
   #endregion
   
   #region Public Methods
-  
+  /*** Create Step State ***/
   /** When saying "Mark" */
   public void OnVoiceCommandMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if(ClickedAGameObject() != null) return; // Don't allow this if the user has clicked on a game object.
+    if(ClickedGameObject() != null) return; // Don't allow if clicked on a game object.
     
     Debug.Log("VoiceCommandMark()");
     
-    // TODO: This function will find the pose at the CurrentPointerTarget
-    // CreateStep();
+    CreateStep();
   }
-  
-  private GameObject ClickedAGameObject() {
-    return CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
-  }
-  
   /** When "Air Click"ing */
   public void AirClickMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedAGameObject() != null) { // Pass click event to child so that children elements can be clicked.
-      Interactable clickedGoInteractable = ClickedAGameObject().GetComponentInParent<Interactable>();
+    if (ClickedGameObject() != null) { // Pass click event to child so that children elements can be clicked.
+      Interactable clickedGoInteractable = ClickedGameObject().GetComponentInParent<Interactable>();
       if (clickedGoInteractable != null) clickedGoInteractable.OnClick.Invoke();
       return;
     }
 
     Debug.Log("AirClickMark()");
-
-    // Get the pose for the primary pointer when saying "Mark".
-    Vector3    position = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.Details.Point;
-    Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
-    Pose       pose     = new Pose(position, rotation);
-  
-    // Create a Step and start recording.
-    // FIXME: 
-    // CreateStep(pose);
+    
+    CreateStep();
   }
   
   /**
    * When the user is in `Recording` state, stop recording and save the video to the storage.
    */
   public void EndMarking() {
-    if (SceneController.State != SceneState.StepRecording) {
-      Debug.Log("End Marking(): ERROR - Not in Recording State");
-      return;  
-    }
-
     Debug.Log("End Marking()");
     
     /*** Stop Recording ***/
     // Stop video recording and save associate the video to the Step.
-    SceneController.TutorialStore.UpdateLastStep("videoFilePath", CameraProvider.StopRecording());
+    // TODO: Turn this back on
+    // SceneController.TutorialStore.UpdateLastStep("videoFilePath", CameraProvider.StopRecording());
     // Stop the dictation recording
+    Debug.Log("Speech-To-Text: Stopping");
     _dictationHandler.StopRecording();
-    
     
     /*** Update State ***/
     // Once the recording has been stopped, change the state to `CreateStep`
-    // FIXME:
-    // state = State.CreateStep;
-    // Debug.Log("In State: " + state);
+    SceneController.State = SceneState.CreateStep;
   }
   
   /**
@@ -378,4 +370,9 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.LogError("OnDictationError: ERROR - " + error);
   }
   #endregion
+  
+  /***** Private Methods *****/
+  private GameObject ClickedGameObject() {
+    return CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
+  }
 }

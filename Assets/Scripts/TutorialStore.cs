@@ -48,8 +48,6 @@ public class TutorialStore {
   
   /** Create a new step for the latest tutorial. */
   public StepDetails AddStep(Pose pose) {
-    Debug.Log("TutorialStore.AddStep()");
-    
     // Get the latest tutorial
     Tutorial latestTutorial = tutorials[tutorials.Count - 1];
     
