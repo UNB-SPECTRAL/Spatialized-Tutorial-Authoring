@@ -1187,6 +1187,7 @@ GameObject:
   - component: {fileID: 250907778}
   - component: {fileID: 250907777}
   - component: {fileID: 250907779}
+  - component: {fileID: 250907781}
   - component: {fileID: 250907780}
   m_Layer: 0
   m_Name: Record Scene Controller
@@ -1230,7 +1231,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 250907776}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45b3eff181cc4244a8a14234096e62fd, type: 3}
   m_Name: 
@@ -1243,23 +1244,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 250907777}
           m_TargetAssemblyTypeName: RecordSceneController, Assembly-CSharp
-          m_MethodName: Mark
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  - keyword: End Marking
-    response:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 250907777}
-          m_TargetAssemblyTypeName: RecordSceneController, Assembly-CSharp
-          m_MethodName: EndMarking
+          m_MethodName: OnVoiceCommandMark
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -1270,7 +1255,7 @@ MonoBehaviour:
             m_BoolArgument: 0
           m_CallState: 2
   persistentKeywords: 0
-  speechConfirmationTooltipPrefab: {fileID: 0}
+  speechConfirmationTooltipPrefab: {fileID: 8046114618238072051, guid: 271778f6c957b524981067a81d238394, type: 3}
 --- !u!114 &250907780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1300,6 +1285,50 @@ MonoBehaviour:
   OnDictationError:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &250907781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250907776}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1410eac1ae94b4d4492a09cc368e152c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  states: {fileID: 11400000, guid: 5eac1712038236e4b8ffdb3893804fe1, type: 2}
+  InputActionId: 0
+  isGlobal: 1
+  Dimensions: 1
+  dimensionIndex: 0
+  startDimensionIndex: 0
+  CanSelect: 1
+  CanDeselect: 1
+  voiceCommand: 
+  voiceRequiresFocus: 0
+  profiles:
+  - Target: {fileID: 0}
+    Themes:
+    - {fileID: 0}
+  OnClick:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 250907777}
+        m_TargetAssemblyTypeName: RecordSceneController, Assembly-CSharp
+        m_MethodName: AirClickMark
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  Events: []
+  resetOnDestroy: 0
+  enabledOnStart: 1
 --- !u!1 &257052984
 GameObject:
   m_ObjectHideFlags: 0
@@ -2410,7 +2439,7 @@ MonoBehaviour:
   startDimensionIndex: 0
   CanSelect: 0
   CanDeselect: 0
-  voiceCommand: Select
+  voiceCommand: 
   voiceRequiresFocus: 1
   profiles:
   - Target: {fileID: 1161525129}
@@ -8467,7 +8496,7 @@ MonoBehaviour:
   startDimensionIndex: 0
   CanSelect: 0
   CanDeselect: 0
-  voiceCommand: Select
+  voiceCommand: 
   voiceRequiresFocus: 1
   profiles:
   - Target: {fileID: 763916548}

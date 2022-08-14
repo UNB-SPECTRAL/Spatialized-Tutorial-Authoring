@@ -38,7 +38,6 @@ public class CameraProvider : MonoBehaviour {
     if (gameObject.name != "Main Camera") {
       Debug.LogError("CameraProvider must be attached to the `Main Camera` Game Object");
       throw new Exception("CameraProvider must be attached to the `Main Camera` Game Object");
-      return;
     }
     
     // Check if there is a Microphone available for recording

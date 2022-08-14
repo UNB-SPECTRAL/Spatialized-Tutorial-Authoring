@@ -10,7 +10,11 @@ using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
 using SceneState = SceneController.SceneState;
 
-/** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
+/**
+ * Captures "Air Click" events and instantiates/saves a ToolTip at that location.
+ *
+ * TODO: Rename to ActionController. Given a state, enable/disable actions.
+ */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
   /***** Unity Editor Fields *****/
   #region Unity Editor Fields
@@ -26,7 +30,10 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   
   /***** Private Variables *****/
   #region Private Variables
-  /** Reference to the DictationHandler script which is used to toggle speech-to-text */
+  /*** CreateStep State ***/
+  private SpeechInputHandler _speechInputHandler;
+  private Interactable       _interactable;
+  /*** StepRecording State ***/
   private DictationHandler _dictationHandler;
   #endregion
   
@@ -49,10 +56,14 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       Debug.LogError("RecordSceneController requires a DictationHandler component.");
     }
     
+    /*** Component References ***/
+    _speechInputHandler = GetComponent<SpeechInputHandler>();
+    _interactable       = GetComponent<Interactable>();
+    
+    _dictationHandler   = GetComponent<DictationHandler>();
+    
     /*** Component Reference & Setup ***/
     Debug.Log("Setting Up DictationHandler Callbacks");
-    // Save a reference to the DictationHandler
-    _dictationHandler = GetComponent<DictationHandler>();
     // Add an event listener when the DictationHandler stops recording.
     _dictationHandler.OnDictationComplete.AddListener(OnDictationComplete);
     // Capture the transcript hypothesis in real-time to determine if the keyword
@@ -63,6 +74,47 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     // Add an event listener when the DictationHandler has an error
     _dictationHandler.OnDictationError.AddListener(OnDictationError);
   }
+  
+  void Update() {
+    switch (SceneController.State) {
+      case SceneState.MainMenu: {
+        /*** Create Step State ***/
+        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if(_interactable.enabled) _interactable.enabled             = false;
+        
+        break;
+      }
+      case SceneState.CreateTutorial: {
+        /*** Create Step State ***/
+        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if(_interactable.enabled) _interactable.enabled             = false;
+        
+        break;
+      }
+      case SceneState.CreateStep: {
+        /*** Create Step State ***/
+        if(!_speechInputHandler.enabled) _speechInputHandler.enabled = true;
+        if(!_interactable.enabled) _interactable.enabled             = true;
+        
+        break;
+      }
+      case SceneState.StepRecording: {
+        /*** Create Step State ***/
+        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if(_interactable.enabled) _interactable.enabled             = false;
+        
+        break;
+      }
+      case SceneState.StepPlaying: {
+        /*** Create Step State ***/
+        if(_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        if(_interactable.enabled) _interactable.enabled             = false;
+        
+        break;
+      }
+    }
+  }
+  
   #endregion
   
   /** TODO: Remove this section and use the InteractionHandler Global approach */
@@ -90,7 +142,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    */
   public void OnPointerClicked(MixedRealityPointerEventData eventData) {
     // If we are not in the Idle State, don't do anything.
-    if (SceneController.State != SceneState.CreateStep) {
+    /*if (SceneController.State != SceneState.CreateStep) {
       Debug.Log("OnPointerClicked(): Not in Idle State"); 
     } else {
       // Log for debugging.
@@ -110,7 +162,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
       
       // Create a new ToolTip at the hit location.
       CreateStep(pose);
-    }
+    }*/
   }
 
   public void OnPointerDown(MixedRealityPointerEventData eventData) {}
@@ -126,8 +178,13 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * Create a new Step for a Tutorial, instantiates that Step and
    * start a recording (video, audio).
    */
-  private void CreateStep(Pose pose) {
+  private void CreateStep() {
     Debug.Log("CreateStep()");
+    
+    // Get the primary pointer location
+    Vector3    position = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.Details.Point;
+    Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
+    Pose       pose     = new Pose(position, rotation);
     
     // Create a step in the TutorialSore
     StepDetails stepDetails = SceneController.TutorialStore.AddStep(pose);
@@ -175,27 +232,41 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   #endregion
   
   #region Public Methods
-
-  /**
-   * When in IDLE state and the user says the keyword "Mark", create a ToolTip
-   * at the current location ans start a recording.
-   */
-  public void Mark() {
-    // If we are not in the Idle State, don't do anything.
-    if (SceneController.State != SceneState.CreateStep) {
-      Debug.Log("Speech Recognized: \"Mark\": Not in Idle State");
+  
+  /** When saying "Mark" */
+  public void OnVoiceCommandMark() {
+    if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
+    if(ClickedAGameObject() != null) return; // Don't allow this if the user has clicked on a game object.
+    
+    Debug.Log("VoiceCommandMark()");
+    
+    // TODO: This function will find the pose at the CurrentPointerTarget
+    // CreateStep();
+  }
+  
+  private GameObject ClickedAGameObject() {
+    return CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
+  }
+  
+  /** When "Air Click"ing */
+  public void AirClickMark() {
+    if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
+    if (ClickedAGameObject() != null) { // Pass click event to child so that children elements can be clicked.
+      Interactable clickedGoInteractable = ClickedAGameObject().GetComponentInParent<Interactable>();
+      if (clickedGoInteractable != null) clickedGoInteractable.OnClick.Invoke();
       return;
     }
-    
-    Debug.Log("Speech Recognized: \"Mark\"");
-    
+
+    Debug.Log("AirClickMark()");
+
     // Get the pose for the primary pointer when saying "Mark".
     Vector3    position = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.Details.Point;
     Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
     Pose       pose     = new Pose(position, rotation);
-    
+  
     // Create a Step and start recording.
-    CreateStep(pose);
+    // FIXME: 
+    // CreateStep(pose);
   }
   
   /**
