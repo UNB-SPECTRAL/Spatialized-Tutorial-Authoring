@@ -1,5 +1,4 @@
 using System;
-using Microsoft.MixedReality.Toolkit;
 using UnityEngine;
 
 /** Handler for the applications menus and buttons */
@@ -19,28 +18,37 @@ public class SceneController : MonoBehaviour {
   // [Header("Guidance Scene")]
   // TODO: Add guidance buttons.
   
-  /***** Scene State *****/
+  /***** Public Variables *****/
   public enum SceneState {
     MainMenu,
     CreateTutorial,
     CreateStep,
     StepRecording,
-    StepViewing
+    StepPlaying
   };
   [HideInInspector]
   public SceneState state;
   
+  [HideInInspector]
+  public TutorialStore tutorialStore;
+  
   /***** Static Reference *****/
-  public static SceneController Instance;
+  private static SceneController _instance;
+  public static SceneState State {
+    get => _instance.state;
+    set => _instance.state = value;
+  }
+  public static TutorialStore TutorialStore => _instance.tutorialStore;
 
   /*** Unity Methods ***/
   void Awake() {
-    if(!Instance) Instance = this;
+    if(!_instance) _instance = this;
     else Destroy(gameObject);
   }
   
   void Start() {
-    state = SceneState.MainMenu;
+    state          = SceneState.MainMenu;
+    tutorialStore = TutorialStore.Load();
   }
   
   void Update() {
@@ -64,7 +72,7 @@ public class SceneController : MonoBehaviour {
         // TODO: Add guidance buttons
         break;
       case SceneState.CreateStep:
-      case SceneState.StepViewing:
+      case SceneState.StepPlaying:
         mainMenu.SetActive(false);
         
         createTutorialButton.SetActive(false);

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Video;
 
 /*** Import Helpers ***/
-using StepDetails = RecordSceneController.TutorialStore.Tutorial.StepDetails;
+using StepDetails = TutorialStore.Tutorial.StepDetails;
 
 /**
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
@@ -122,8 +122,8 @@ public class StepController : MonoBehaviour {
         Debug.Log("Step " + stepDetails.id + " video ended. Stopping video.");
         
         // Update the RecordSceneState so other videos can be played
-        RecordSceneController.Instance.state = RecordSceneController.State.CreateStep;
-        Debug.Log("In State: " + RecordSceneController.Instance.state);
+        SceneController.State = SceneController.SceneState.CreateStep ;
+        Debug.Log("In State: " + SceneController.State);
         
         // Once the video is done, render the first frame again.
         videoPlayer.frame = 0;
@@ -150,7 +150,7 @@ public class StepController : MonoBehaviour {
     Debug.Log(stepDetails.name.Split(':')[0] + " Clicked");
     
     // When the RecordSceneController is in RECORDING state, exit
-    if(RecordSceneController.CurrentState == RecordSceneController.State.StepRecording) {
+    if(SceneController.State == SceneController.SceneState.StepRecording) {
       Debug.Log("Recording state, exiting");
       return;
     }
@@ -158,12 +158,12 @@ public class StepController : MonoBehaviour {
     // When the RecordSceneController is in IDLE state, AND the VideoPlayer is
     // NOT playing, then play the VideoPlayer.
     if(
-        RecordSceneController.CurrentState == RecordSceneController.State.CreateStep
+        SceneController.State == SceneController.SceneState.CreateStep
         && videoPlayer.isPlaying == false
       ) {
       // Notify the RecordSceneController that a video is playing
-      RecordSceneController.Instance.state = RecordSceneController.State.StepPlaying;
-      Debug.Log("In State: " + RecordSceneController.Instance.state);
+      SceneController.State = SceneController.SceneState.StepPlaying;
+      Debug.Log("In State: " + SceneController.State);
       
       Debug.Log("Video is not playing. Playing video");
       
@@ -173,12 +173,12 @@ public class StepController : MonoBehaviour {
     // IS playing, then this ToolTip must be playing the video and thus we can
     // pause the VideoPlayer.
     else if(
-        RecordSceneController.CurrentState == RecordSceneController.State.StepPlaying
+        SceneController.State == SceneController.SceneState.StepPlaying
         && videoPlayer.isPlaying
       ) {
       // Notify the RecordSceneController that a video is not playing
-      RecordSceneController.Instance.state = RecordSceneController.State.CreateStep;
-      Debug.Log("In State: " + RecordSceneController.Instance.state);
+      SceneController.State = SceneController.SceneState.CreateStep;
+      Debug.Log("In State: " + SceneController.State);
       
       Debug.Log("Video is playing. Pausing video");
       
@@ -186,8 +186,8 @@ public class StepController : MonoBehaviour {
     }
     else {
       Debug.Log("No case matched. Exiting");
-      Debug.Log(RecordSceneController.CurrentState);
-      Debug.Log(videoPlayer.isPlaying);  
+      Debug.Log("State: " + SceneController.State);
+      Debug.Log("IsVideoPlaying: " + videoPlayer.isPlaying);  
     }
   }
   #endregion

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
@@ -10,30 +8,11 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /*** Import Helpers ***/
-using Tutorial = RecordSceneController.TutorialStore.Tutorial;
-using StepDetails = RecordSceneController.TutorialStore.Tutorial.StepDetails;
+using Tutorial = TutorialStore.Tutorial;
+using StepDetails = TutorialStore.Tutorial.StepDetails;
 
 /** Captures "Air Click" events and instantiates/saves a ToolTip at that location. */
 public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRealityPointerHandler {
-  #region Public Static Variables
-  /**
-   * Static reference to the instantiated RecordSceneController. This allows
-   * other GameObjects to access the instantiated RecordSceneController without
-   * the need to pass it a reference.
-   */
-  public static RecordSceneController Instance;
-  
-  /**
-   * Static reference to the instantiated RecordSceneController's `state` field.
-   * This is used in a few GameObjects to skip writing `RecordSceneController.Instance.state`
-   * and just write `RecordSceneController.CurrentState`.
-   *
-   * TODO: Improvement could be to rename this to State and update the internal State reference
-   * to something else.
-   */
-  public static State CurrentState => Instance.state;
-  #endregion
-
   /***** Unity Editor Fields *****/
   #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
@@ -81,8 +60,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
   
   /***** Private Variables *****/
   #region Private Variables
-  /** Instance of the TutorialStore */
-  private TutorialStore _tutorialStore;
   /** Reference to the DictationHandler script which is used to toggle speech-to-text */
   private DictationHandler _dictationHandler;
   #endregion
@@ -94,12 +71,6 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
    * - Load the ToolTipStore from storage.
    */
   private void Awake() {
-    if(Instance == null) Instance = this;
-    else Destroy(this);
-    
-    /*** Instantiate a new TutorialStore (will try to load date from memory) ***/
-    _tutorialStore = TutorialStore.Load();
-    
     // Set the state to CreateTutorial
     state = State.CreateTutorial;
     Debug.Log("In State: " + state);
@@ -193,7 +164,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.Log("CreateStep()");
     
     // Create a step in the TutorialSore
-    StepDetails stepDetails = _tutorialStore.AddStep(pose);
+    StepDetails stepDetails = SceneController.TutorialStore.AddStep(pose);
 
     // Create the Step GameObject
     InstantiateStep(stepDetails);
@@ -248,27 +219,11 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.Log("OnCreateTutorial()");
     
     // Create a new tutorial
-    _tutorialStore.AddTutorial();
+    SceneController.TutorialStore.AddTutorial();
     
     // Enter into "CreateStep" state
     state = State.CreateStep;
     Debug.Log("In State: " + state);
-  }
-  
-  /** When the user pressed the "Stop" button, we return to the `Main Menu` scene */
-  public void OnStopTutorial() {
-    // We must be in the "Create Step" state.
-    if (state != State.CreateStep) {
-      Debug.LogError("OnStopTutorial: Not in \"Create Step\" State");
-      return;
-    }
-    
-    Debug.Log("Disabling World Locking Toolkit");
-    var settings = WorldLockingManager.GetInstance().Settings;
-    settings.Enabled = false;
-    
-    // Return to the Main Menu scene
-    SceneManager.LoadScene("Main Menu");
   }
 
   /**
@@ -306,7 +261,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     
     /*** Stop Recording ***/
     // Stop video recording and save associate the video to the Step.
-    _tutorialStore.UpdateLastStep("videoFilePath", CameraProvider.StopRecording());
+    SceneController.TutorialStore.UpdateLastStep("videoFilePath", CameraProvider.StopRecording());
     // Stop the dictation recording
     _dictationHandler.StopRecording();
     
@@ -325,7 +280,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.Log("LoadTutorial(" + tutorialId + ")");
     
     // Find the tutorial matching the tutorialId
-    Tutorial tutorial = _tutorialStore.GetTutorial(tutorialId);
+    Tutorial tutorial = SceneController.TutorialStore.GetTutorial(tutorialId);
     if (tutorial == null) {
       Debug.LogError("LoadTutorial(): ERROR - No tutorial found with id " + tutorialId);
       return;
@@ -369,7 +324,7 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     }
     
     // Reset the TutorialStore
-    _tutorialStore.Reset();
+    SceneController.TutorialStore.Reset();
   }
   #endregion
   
@@ -394,158 +349,11 @@ public class RecordSceneController : InputSystemGlobalHandlerListener, IMixedRea
     Debug.Log("OnDictationComplete(): " + transcript);
 
     // Associate this transcript to the latest ToolTip
-    _tutorialStore.UpdateLastStep("transcript", transcript);
+    SceneController.TutorialStore.UpdateLastStep("transcript", transcript);
   }
 
   private void OnDictationError(string error) {
     Debug.LogError("OnDictationError: ERROR - " + error);
-  }
-  #endregion
-
-  /** Tutorial Store stores all tutorials and their steps. */
-  // TODO: Move this into another file.
-  #region TutorialStore
-  [Serializable]
-  public class TutorialStore {
-    private const string FileName = "tutorials.json";
-    
-    public List<Tutorial> tutorials = new List<Tutorial>();
-    
-    /** Loads the TutorialStore from disk. This should be used instead of instantiation */
-    public static TutorialStore Load() {
-      // Try to load the data from disk since it could have been deleted.
-      try {
-        string        filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
-        string        serializedData = File.ReadAllText(filePath);
-        return JsonUtility.FromJson<TutorialStore>(serializedData);
-      }
-      catch (FileNotFoundException) {
-        Debug.Log("Cannot find " + FileName + " in " + Application.streamingAssetsPath + ". Creating new file.");
-        
-        // If no file exists, create a new one.
-        TutorialStore tutorialStore = new TutorialStore();
-        
-        // Save the newly created file
-        tutorialStore.Save();
-        
-        // Return the newly created file.
-        return tutorialStore;
-      }
-    }
-
-    /** Create a new tutorial */
-    public void AddTutorial() {
-      // Instantiate a new tutorial using the existing count at the ID + 1.
-      Tutorial tutorial = new Tutorial(tutorials.Count + 1);
-      
-      tutorials.Add(tutorial);
-      
-      Save();
-    }
-    
-    /** Create a new step for the latest tutorial. */
-    public StepDetails AddStep(Pose pose) {
-      Debug.Log("TutorialStore.AddStep()");
-      
-      // Get the latest tutorial
-      Tutorial latestTutorial = tutorials[tutorials.Count - 1];
-      
-      // Add the step to the latest tutorial
-      StepDetails stepDetails = latestTutorial.AddStep(pose);
-      
-      // Persist the data to disk.
-      Save();
-      
-      return stepDetails;
-    }
-    
-    public StepDetails UpdateLastStep(string key, string value) {
-      // Get the latest tutorial
-      Tutorial latestTutorial = tutorials[tutorials.Count - 1];
-      
-      // Update the last step in the latest tutorial
-      StepDetails latestStepDetails = latestTutorial.UpdateLastStep(key, value);
-      
-      // Persist the data to disk.
-      Save();
-
-      return latestStepDetails;
-    }
-    
-    public Tutorial GetTutorial(int tutorialId) {
-      return tutorials.Find(tutorial => tutorial.id == tutorialId);
-    }
-    
-    public void Reset() {
-      tutorials = new List<Tutorial>();
-        
-      // Persist this change to the filesystem.
-      Save();
-    }
-
-    private void Save() {
-      string filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
-      string serializedData = JsonUtility.ToJson(this, true);
-      File.WriteAllText(filePath, serializedData);
-    }
-    
-    [Serializable]
-    public class Tutorial {
-      public int               id; // e.g. 1
-      public string            name; // e.g. Tutorial 1
-      public List<StepDetails> steps; // e.g. []
-      
-      /** Constructor */
-      public Tutorial(int id) {
-        this.id = id;
-        name = "Tutorial " + id;
-        steps = new List<StepDetails>();
-      }
-      
-      /** Add a step to a tutorial */
-      public StepDetails AddStep(Pose pose) {
-        StepDetails step = new StepDetails(steps.Count + 1, pose);
-        steps.Add(step);
-        return step;
-      }
-      
-      public StepDetails UpdateLastStep(string key, string value) {
-        // Get the last stepDetails
-        var lastStepDetails = steps[steps.Count - 1];
-
-        switch (key) {
-          case "videoFilePath":
-            lastStepDetails.videoFilePath = value;
-            break;
-          case "transcript":
-            lastStepDetails.transcript = value;
-            // When updating the transcript, also update the text so that we can
-            // include 15 characters of transcript text in the UI.
-            lastStepDetails.name += ": " + value.Substring(0, (Math.Min(15, value.Length))) + "...";
-            break;
-          default:
-            throw new Exception("StepDetails does not have a key named " + key + " that can be set.");
-        }
-
-        return lastStepDetails;
-      }
-      
-      [Serializable]
-      public class StepDetails {
-        public int    id;   // e.g. 1
-        public string name; // e.g. Step 1
-        public Pose   globalPose;
-        public string videoFilePath;
-        public string transcript;
-        
-        /** Constructor */
-        public StepDetails(int id, Pose pose) {
-          this.id = id;
-          name = "Step " + id;
-          globalPose = pose;
-        }
-      }
-    }
   }
   #endregion
 }
