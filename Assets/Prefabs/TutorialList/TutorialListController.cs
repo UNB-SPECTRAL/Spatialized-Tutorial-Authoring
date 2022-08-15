@@ -1,3 +1,4 @@
+using System;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using UnityEngine;
@@ -6,9 +7,10 @@ public class TutorialListController : MonoBehaviour {
   public GridObjectCollection gridObjectCollection;
   public GameObject           tutorialListButtonPrefab;
   public GameObject           backButton;
-  
-  void Start() {
+
+  void OnEnable() {
     /*** Setup Back Button OnClick ***/
+    backButton.GetComponent<ButtonConfigHelper>().OnClick.RemoveAllListeners(); // Remove listener first
     backButton.GetComponent<ButtonConfigHelper>().OnClick.AddListener(() => {
       SceneController.Instance.OnTutorialListBackButtonPress();
     });
@@ -18,9 +20,12 @@ public class TutorialListController : MonoBehaviour {
     
     // For each tutorial, create a button and add it to the list.
     foreach (var tutorial in tutorials) {
-      var tutorialListButton = Instantiate(tutorialListButtonPrefab, gridObjectCollection.transform);
+      var tutorialListButton = GameObject.Find(tutorial.name);
+      // If the tutorial is not in the list already, create it
+      if (tutorialListButton == null) tutorialListButton = Instantiate(tutorialListButtonPrefab, gridObjectCollection.transform);
 
-      var tutorialListButtonConfigHelper = tutorialListButton.GetComponent<ButtonConfigHelper>();
+      tutorialListButton.name = tutorial.name;
+        var tutorialListButtonConfigHelper = tutorialListButton.GetComponent<ButtonConfigHelper>();
       
       tutorialListButtonConfigHelper.MainLabelText = tutorial.name;
       tutorialListButtonConfigHelper.OnClick.AddListener(() => SceneController.Instance.OnTutorialListButtonPress(tutorial));

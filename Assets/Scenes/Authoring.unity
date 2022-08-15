@@ -4996,8 +4996,8 @@ MonoBehaviour:
   smoothing: 1
   lifetime: 0
   referenceDirection: 0
-  minDistance: 0.3
-  maxDistance: 0.7
+  minDistance: 0.5
+  maxDistance: 1
   minViewDegrees: 0
   maxViewDegrees: 20
   aspectV: 1
@@ -10658,8 +10658,8 @@ MonoBehaviour:
   smoothing: 1
   lifetime: 0
   referenceDirection: 0
-  minDistance: 0.3
-  maxDistance: 0.7
+  minDistance: 0.5
+  maxDistance: 1
   minViewDegrees: 0
   maxViewDegrees: 20
   aspectV: 1
@@ -14608,8 +14608,8 @@ MonoBehaviour:
   smoothing: 1
   lifetime: 0
   referenceDirection: 0
-  minDistance: 0.3
-  maxDistance: 0.7
+  minDistance: 0.5
+  maxDistance: 1
   minViewDegrees: 0
   maxViewDegrees: 20
   aspectV: 1
@@ -17666,8 +17666,8 @@ MonoBehaviour:
   smoothing: 1
   lifetime: 0
   referenceDirection: 0
-  minDistance: 0.3
-  maxDistance: 0.7
+  minDistance: 0.5
+  maxDistance: 1
   minViewDegrees: 0
   maxViewDegrees: 20
   aspectV: 1
@@ -19772,8 +19772,8 @@ MonoBehaviour:
   smoothing: 1
   lifetime: 0
   referenceDirection: 0
-  minDistance: 0.3
-  maxDistance: 0.7
+  minDistance: 0.5
+  maxDistance: 1
   minViewDegrees: 0
   maxViewDegrees: 20
   aspectV: 1
@@ -24421,6 +24421,14 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 770860065}
+    - target: {fileID: 8814477023382643469, guid: 3ce363533370cca49b8e72c6df6e8a3b, type: 3}
+      propertyPath: maxDistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8814477023382643469, guid: 3ce363533370cca49b8e72c6df6e8a3b, type: 3}
+      propertyPath: minDistance
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8919465661839368247, guid: 3ce363533370cca49b8e72c6df6e8a3b, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
