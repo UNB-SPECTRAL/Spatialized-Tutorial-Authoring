@@ -6,6 +6,7 @@ using UnityEngine.Video;
 
 /*** Import Helpers ***/
 using StepDetails = TutorialStore.Tutorial.StepDetails;
+using SceneState = SceneController.SceneState;
 
 /**
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
@@ -123,16 +124,15 @@ public class StepController : MonoBehaviour {
       // When setting up the VideoPlayer we want to be notified when the video
       // is ended to notify the RecordSceneController.
       videoPlayer.loopPointReached += (source) => {
-        Debug.Log("Step " + stepDetails.id + " video ended. Stopping video.");
-        
-        // Update the RecordSceneState so other videos can be played
-        SceneController.State = SceneController.SceneState.CreateStep ;
-        Debug.Log("In State: " + SceneController.State);
+        Debug.Log("Step " + stepDetails.id + " video ended");
         
         // Once the video has ended, reset the video to show the first frame.
         // frame = 0 is sometimes a grey frame on the HoloLens.
         videoPlayer.frame = 1;
         
+        // Notify the SceneController
+        SceneController.PausingOrStopStepVideo();
+
         // Stop the video
         // TODO: This was trying to un-prepare the video to save on RAM.
         // Note that Stop will remove it from memory.
@@ -151,48 +151,31 @@ public class StepController : MonoBehaviour {
    * for the Tooltip. This will either play or pause the VideoPlayer.
    */
   public void OnClick() {
-    // FIXME: Logging since there seems to be multiple clicks on a ToolTip
-    Debug.Log(stepDetails.name.Split(':')[0] + " Clicked");
-    
-    // When the RecordSceneController is in RECORDING state, exit
-    if(SceneController.State == SceneController.SceneState.StepRecording) {
-      Debug.Log("Recording state, exiting");
+    // Check if a click event can be handled
+    if(!SceneController.CanClickStep(videoPlayer)) {
+      Debug.LogWarning("Step " + stepDetails.id + " OnClick(): ERROR - In Incorrect State");
       return;
     }
+    
+    Debug.Log("Step " + stepDetails.id + " clicked");
 
-    // When the RecordSceneController is in IDLE state, AND the VideoPlayer is
-    // NOT playing, then play the VideoPlayer.
-    if(
-        SceneController.State == SceneController.SceneState.CreateStep
-        && videoPlayer.isPlaying == false
-      ) {
-      // Notify the RecordSceneController that a video is playing
-      SceneController.State = SceneController.SceneState.StepPlaying;
-      Debug.Log("In State: " + SceneController.State);
-      
-      Debug.Log("Video is not playing. Playing video");
-      
+    // If the video is not playing, play it.
+    if(videoPlayer.isPlaying == false) {
+      // Play the video
+      Debug.Log("Playing Video");
       videoPlayer.Play();
-    }
-    // When the RecordSceneController is in PLAYING state, AND the VideoPlayer
-    // IS playing, then this ToolTip must be playing the video and thus we can
-    // pause the VideoPlayer.
-    else if(
-        SceneController.State == SceneController.SceneState.StepPlaying
-        && videoPlayer.isPlaying
-      ) {
-      // Notify the RecordSceneController that a video is not playing
-      SceneController.State = SceneController.SceneState.CreateStep;
-      Debug.Log("In State: " + SceneController.State);
       
-      Debug.Log("Video is playing. Pausing video");
-      
-      videoPlayer.Pause();
+      // Notify the SceneController
+      SceneController.PlayingStepVideo();
     }
+    // If the video is not playing, pause it
     else {
-      Debug.Log("No case matched. Exiting");
-      Debug.Log("State: " + SceneController.State);
-      Debug.Log("IsVideoPlaying: " + videoPlayer.isPlaying);  
+      // Pause the video
+      Debug.Log("Pausing Video"); 
+      videoPlayer.Pause();
+      
+      // Notify the SceneController
+      SceneController.PausingOrStopStepVideo();
     }
   }
   #endregion

@@ -84,6 +84,22 @@ public class TutorialStore {
   public Tutorial GetTutorial(int tutorialId) {
     return tutorials.Find(tutorial => tutorial.id == tutorialId);
   }
+
+  public void DeleteTutorial(int tutorialId) {
+    // Delete existing tutorial videos that are prefixed with the tutorial ID.
+    // Since there is sometimes remaining videos files on the HoloLens from 
+    // previous recordings on the Windows machine.
+    string[] videoFiles = Directory.GetFiles(
+      Application.streamingAssetsPath, "tutorial_" + tutorialId + "*.mp4"
+    );
+    foreach (string videoFile in videoFiles) { File.Delete(videoFile); }
+    
+    // Delete the tutorial from the list of tutorials.
+    tutorials.RemoveAll(tutorial => tutorial.id == tutorialId);
+    
+    // Persist the data to disk.
+    Save();
+  }
   
   public void Reset() {
     tutorials = new List<Tutorial>();
