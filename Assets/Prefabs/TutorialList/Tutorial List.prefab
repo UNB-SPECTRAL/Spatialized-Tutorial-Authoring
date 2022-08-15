@@ -911,7 +911,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3763747124298104054}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0418, y: 0.059, z: 0}
+  m_LocalPosition: {x: -0.0462, y: 0.0546, z: 0}
   m_LocalScale: {x: 0.005, y: 0.005, z: 0.005}
   m_Children: []
   m_Father: {fileID: 7466447138219788200}
@@ -1003,9 +1003,9 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4617273406052635756}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.02, z: 0}
-  m_LocalScale: {x: 1, y: 1.2, z: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.02, y: 0.02, z: 0}
+  m_LocalScale: {x: 1.3, y: 1.2, z: 1}
   m_Children:
   - {fileID: 8179982067959792277}
   m_Father: {fileID: 7466447138219788200}
@@ -1425,77 +1425,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nodeList:
-  - Name: PressableButtonHoloLens2_32x96_NoLabel
+  - Name: Tutorial List Button With Delete
     Offset: {x: 0, y: 0}
     Radius: 0
     Transform: {fileID: 0}
     Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (1)
+  - Name: Tutorial List Button With Delete (1)
     Offset: {x: 0, y: 0}
     Radius: 0
     Transform: {fileID: 0}
     Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (2)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (3)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (4)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (5)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (6)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (7)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (8)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (9)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (10)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (11)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (12)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (13)
-    Offset: {x: 0, y: 0}
-    Radius: 0
-    Transform: {fileID: 0}
-    Colliders: []
-  - Name: PressableButtonHoloLens2_32x96_NoLabel (14)
+  - Name: Tutorial List Button With Delete (2)
     Offset: {x: 0, y: 0}
     Radius: 0
     Transform: {fileID: 0}
@@ -1512,9 +1452,9 @@ MonoBehaviour:
   radius: 2
   radialRange: 180
   distance: 0
-  rows: 15
+  rows: 3
   columns: 1
-  cellWidth: 0.096
+  cellWidth: 0.1
   cellHeight: 0.032
   assetVersion: 1
 --- !u!1 &5905810503577770089
@@ -1902,7 +1842,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6697391841461725634}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0212, y: 0.058, z: -0.009}
+  m_LocalPosition: {x: 0.0531, y: 0.055, z: -0.009}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 6697391840687309496}
@@ -2733,7 +2673,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridObjectCollection: {fileID: 5146057587423385380}
-  tutorialListButtonPrefab: {fileID: 448274222267180159, guid: 5483a16cb0c80ca4aa6c9a68b74dc417, type: 3}
+  tutorialListButtonPrefab: {fileID: 7417577953965590564, guid: 91f5a48db1ad49847bcdf4a708788bfb, type: 3}
   backButton: {fileID: 6697391841461725634}
 --- !u!1 &8814477022048362051
 GameObject:
@@ -4398,7 +4338,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8814477023997865696}
   m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 0.07, y: -0.01, z: 0}
+  m_LocalPosition: {x: 0.1016, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8814477023347456062}

@@ -172,6 +172,12 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.LoadTutorial(tutorial); // Load tutorial to the scene
     State = SceneState.ViewSteps;
   }
+
+  public void OnTutorialDeleteButtonPress(Tutorial tutorial) {
+    Debug.Log("OnTutorialDeleteButtonPress(" + tutorial.name + ")");
+    TutorialStore.DeleteTutorial(tutorial.id); // Delete tutorial from the store
+    State = SceneState.ViewTutorials;
+  }
   
   public void OnTutorialListBackButtonPress() {
     Debug.Log("OnTutorialListBacButtonClick()");
