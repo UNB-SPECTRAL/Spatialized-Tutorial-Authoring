@@ -13,8 +13,8 @@ using SceneState = SceneController.SceneState;
  */
 public class StepController : MonoBehaviour {
   /*** Unity Editor ***/
+  public VideoPlayer videoPlayer; // The video player game object.
   public GameObject  deleteButton; // The step delete button game object.
-  public VideoPlayer videoPlayer; // The video player game object
   
   /*** Public Variables ***/
   [HideInInspector]
@@ -54,9 +54,11 @@ public class StepController : MonoBehaviour {
     // Otherwise hide the VideoPlayer.
     else videoPlayer.gameObject.SetActive(false);
     
-    // Only show the delete button when in "Create Step" state
-    if(SceneController.State == SceneState.CreateStep) deleteButton.SetActive(true);
-    else deleteButton.SetActive(false);
+    /*** Setup Delete Button ***/
+    deleteButton.SetActive(false); // Hide the button
+    deleteButton.GetComponent<ButtonConfigHelper>().OnClick.AddListener(() => {
+      SceneController.Instance.OnDeleteStepButtonPress(stepDetails);
+    }); // Setup the listener
   }
 
   void Update() {
@@ -77,6 +79,13 @@ public class StepController : MonoBehaviour {
     if(_toolTip.ToolTipText != stepDetails.name) {
       _toolTip.ToolTipText = stepDetails.name;
     }
+    
+    /*** Update Delete Button Visibility ***/
+    // If we are in the CreateStep state and the delete button is not visible, make it visible
+    if(
+      SceneController.State == SceneState.CreateStep
+      && deleteButton.activeSelf == false
+    ) deleteButton.SetActive(true);
   }
   
   /** Given a url, setup the VideoPlayer with a thumbnail image. */

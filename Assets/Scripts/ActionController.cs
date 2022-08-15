@@ -186,7 +186,7 @@ public class ActionController : MonoBehaviour {
   /** When saying "Mark" */
   public void OnVoiceCommandMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedButton() != null) return; // Don't allow if clicked on a game object.
+    if (ClickedInteractable() != null) return; // Don't allow if clicked on a game object.
     if (ClickedStep() != null) return; // Don't allow if clicked on a Step.
 
     Debug.Log("VoiceCommandMark()");
@@ -197,15 +197,16 @@ public class ActionController : MonoBehaviour {
   /** When "Air Click"ing */
   public void AirClickMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedStep() != null) { // Don't create step on another step. Pass the click along
-      StepController stepController = ClickedStep();
-      stepController.OnClick();
+    
+    if (ClickedInteractable() != null) { // Pass event to interactable if exist
+      Interactable clickedGoInteractable = ClickedInteractable();
+      clickedGoInteractable.OnClick.Invoke();
       return;
     }
-
-    if (ClickedButton() != null) { // Pass click event to child so that children elements can be clicked.
-      Interactable clickedGoInteractable = ClickedButton().GetComponentInParent<Interactable>();
-      if (clickedGoInteractable != null) clickedGoInteractable.OnClick.Invoke();
+    
+    if (ClickedStep() != null) { // Pass event to Step if exist
+      StepController stepController = ClickedStep();
+      stepController.OnClick();
       return;
     }
 
@@ -347,12 +348,17 @@ public class ActionController : MonoBehaviour {
   #endregion
 
   /***** Private Methods *****/
-  // TODO: Maybe name this "ClickedInteractable" and pass along the click.
-  private GameObject ClickedButton() {
+  private Interactable ClickedInteractable() {
     GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
 
-    if (clickedGo != null && clickedGo.CompareTag("Button")) {
-      return clickedGo;
+    // Check if interactable
+    if(clickedGo != null && clickedGo.GetComponent<Interactable>() != null) {
+      return clickedGo.GetComponent<Interactable>();
+    }
+    
+    // Check if parent is interactable
+    if(clickedGo != null && clickedGo.GetComponentInParent<Interactable>() != null) {
+      return clickedGo.transform.parent.GetComponent<Interactable>();
     }
 
     return null;
