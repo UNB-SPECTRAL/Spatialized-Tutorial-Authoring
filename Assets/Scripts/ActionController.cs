@@ -20,7 +20,6 @@ using SceneState = SceneController.SceneState;
  * The entry point of the application is the SceneController.
  */
 public class ActionController : MonoBehaviour {
-  
   #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
   public GameObject stepPrefab;
@@ -46,6 +45,8 @@ public class ActionController : MonoBehaviour {
   #region Static References
   private static ActionController _instance;
   public static ActionController Instance => _instance;
+
+  public static TutorialStore TutorialStore => SceneController.TutorialStore;
   #endregion
 
   #region Unity Methods
@@ -64,7 +65,7 @@ public class ActionController : MonoBehaviour {
     _speechInputHandler = GetComponent<SpeechInputHandler>();
     _interactable       = GetComponent<Interactable>();
 
-    _dictationHandler   = GetComponent<DictationHandler>();
+    _dictationHandler = GetComponent<DictationHandler>();
 
     /*** Dictation Handler Event Setup ***/
     Debug.Log("Setting Up DictationHandler Callbacks");
@@ -134,7 +135,7 @@ public class ActionController : MonoBehaviour {
     Pose       pose     = new Pose(position, rotation);
 
     // Create a step in the TutorialSore
-    StepDetails stepDetails = SceneController.TutorialStore.AddStep(pose);
+    StepDetails stepDetails = TutorialStore.CreateStep(pose);
 
     // Create the Step GameObject
     InstantiateStep(stepDetails);
@@ -170,9 +171,7 @@ public class ActionController : MonoBehaviour {
 
     // Start video recording (pass along the video file name)
     Debug.Log("Video Recording: Starting");
-    int    tutorialId    = SceneController.TutorialStore.tutorials.Last().id;
-    string videoFileName = "tutorial " + tutorialId + " " + stepDetails.name;
-    CameraProvider.StartRecording(videoFileName);
+    CameraProvider.StartRecording(stepDetails.id);
 
     // Start speech-to-text recording
     // TODO: We should use the Unity Dictation API since we can dispose and release the resources.
@@ -203,6 +202,7 @@ public class ActionController : MonoBehaviour {
       stepController.OnClick();
       return;
     }
+
     if (ClickedButton() != null) { // Pass click event to child so that children elements can be clicked.
       Interactable clickedGoInteractable = ClickedButton().GetComponentInParent<Interactable>();
       if (clickedGoInteractable != null) clickedGoInteractable.OnClick.Invoke();
@@ -234,10 +234,40 @@ public class ActionController : MonoBehaviour {
     SceneController.State = SceneState.CreateStep;
   }
 
+  /**
+   * Delete a Step from the Unity Scene and the TutorialStore.
+   *
+   * If this step is not the last step, then update all subsequent steps:
+   * - ID
+   * - Name
+   * - VideoFilePath
+   */
+  public void DeleteStep(StepDetails stepDetails) {
+    // Validate that we are in the right state to delete a step
+    if (SceneController.State != SceneState.CreateStep) {
+      Debug.LogError("DeleteStep(): ERROR - Not in \"Create Step\" state");
+    }
+
+    Debug.Log("DeleteStep(Step " + stepDetails.id + ")");
+
+    // Remove all steps shown in the Unity scene
+    Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
+    foreach (var step in tutorial.steps) {
+      if (GameObject.Find(step.id) != null) Destroy(GameObject.Find(step.id));
+    }
+
+    // Delete step from TutorialStore
+    TutorialStore.DeleteStep(stepDetails.id);
+
+    // Instantiate all Steps to the Unity Scene (without the deleted one)
+    // TODO: The reference of this object might be out of sync... 
+    LoadTutorial(tutorial);
+  }
+
   /** Render tutorial steps */
   public void LoadTutorial(Tutorial tutorial) {
     Debug.Log("LoadTutorial(" + tutorial.name + ")");
-    
+
     // For each step in the tutorial, instantiate it to the scene.
     foreach (StepDetails stepDetails in tutorial.steps) {
       Debug.Log("Found Step " + stepDetails.id + " in store");
@@ -320,18 +350,18 @@ public class ActionController : MonoBehaviour {
   // TODO: Maybe name this "ClickedInteractable" and pass along the click.
   private GameObject ClickedButton() {
     GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
-    
-    if(clickedGo != null && clickedGo.CompareTag("Button")) {
+
+    if (clickedGo != null && clickedGo.CompareTag("Button")) {
       return clickedGo;
     }
 
     return null;
   }
-  
+
   private StepController ClickedStep() {
     GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
-    
-    if( clickedGo != null && clickedGo.GetComponentInParent<StepController>() != null) {
+
+    if (clickedGo != null && clickedGo.GetComponentInParent<StepController>() != null) {
       return clickedGo.GetComponentInParent<StepController>();
     }
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Video;
 using Tutorial = TutorialStore.Tutorial;
+using StepDetails = TutorialStore.Tutorial.StepDetails;
 
 /** Handler for the applications menus and buttons */
 public class SceneController : MonoBehaviour {
@@ -165,6 +166,13 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.EndMarking(); // End recording
     State = SceneState.CreateStep;
   }
+  
+  public void OnDeleteStepButtonPress(StepDetails stepDetails) {
+    Debug.Log("OnDeleteStepButtonPress()");
+    ActionController.Instance.DeleteStep(stepDetails); // Delete a step
+    State = SceneState.CreateStep;
+  }
+  
 
   /*** Guidance Scene ***/
   public void OnTutorialListButtonPress(Tutorial tutorial) {

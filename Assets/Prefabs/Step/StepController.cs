@@ -12,13 +12,19 @@ using SceneState = SceneController.SceneState;
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
  */
 public class StepController : MonoBehaviour {
-  public StepDetails stepDetails;
-  public VideoPlayer videoPlayer;
+  /*** Unity Editor ***/
+  public GameObject  deleteButton; // The step delete button game object.
+  public VideoPlayer videoPlayer; // The video player game object
   
+  /*** Public Variables ***/
+  [HideInInspector]
+  public StepDetails stepDetails;
+  
+  /*** Private Variables ***/
   private ToolTip _toolTip;
 
   void Awake() {
-    // Error handling in case this controller is added to a GameObject which doe snot have a ToolTip component.
+    // Error handling in case this controller is added to a GameObject which does not have a ToolTip component.
     // This is required since this Controller is specifically build to be used with the ToolTip component.
     if(gameObject.GetComponent<ToolTip>() == null) {
       Debug.LogError("StepController requires a ToolTip component");
@@ -38,7 +44,7 @@ public class StepController : MonoBehaviour {
     /*** Step Configuration ***/
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
     // Set these properties.
-    name                 = "Step " + stepDetails.id;
+    name                 = stepDetails.id;
     _toolTip.ToolTipText = stepDetails.name;
     transform.SetGlobalPose(stepDetails.globalPose);
 
@@ -47,6 +53,10 @@ public class StepController : MonoBehaviour {
     if(!string.IsNullOrEmpty(stepDetails.videoFilePath)) SetupVideoPlayer(stepDetails.videoFilePath);
     // Otherwise hide the VideoPlayer.
     else videoPlayer.gameObject.SetActive(false);
+    
+    // Only show the delete button when in "Create Step" state
+    if(SceneController.State == SceneState.CreateStep) deleteButton.SetActive(true);
+    else deleteButton.SetActive(false);
   }
 
   void Update() {
