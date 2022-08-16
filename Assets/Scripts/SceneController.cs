@@ -148,6 +148,12 @@ public class SceneController : MonoBehaviour {
     State = SceneState.ViewTutorials;
   }
 
+  public void OnResetButtonPress() {
+    Debug.Log("OnResetButtonPress()");
+    ActionController.Instance.ResetTutorials(); // Delete all the data
+    State = SceneState.MainMenu;
+  }
+
   /*** Authoring Scene ***/
   public void OnCreateTutorialButtonPress() {
     Debug.Log("OnCreateTutorialButtonPress()");

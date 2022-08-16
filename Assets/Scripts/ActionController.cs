@@ -298,20 +298,19 @@ public class ActionController : MonoBehaviour {
   }
 
   /**
-   * Remove all the Tutorial data, videos and GameObjects in the scene.
-   * TODO: Move this to the Guidance scene.
+   * An easy way to delete all the data in the streaming assets folder
    */
   public void ResetTutorials() {
     Debug.Log("ResetTutorials()");
-
-    // Delete all files in the Streaming Assets directory.
-    string[] videoFiles = Directory.GetFiles(Application.streamingAssetsPath);
-    foreach (string videoFile in videoFiles) {
-      File.Delete(videoFile);
+    
+    // Delete all tutorials from the TutorialStore
+    foreach(var tutorial in TutorialStore.tutorials.ToList()) {
+      TutorialStore.DeleteTutorial(tutorial.id);
     }
 
-    // Also delete all GameObjects tagged as ToolTip so that they don't appear anymore.
-    RemoveSteps();
+    // Delete all files in the Streaming Assets directory.
+    string[] files = Directory.GetFiles(Application.streamingAssetsPath);
+    foreach (string file in files) { File.Delete(file); }
 
     // Reset the TutorialStore
     SceneController.TutorialStore.Reset();

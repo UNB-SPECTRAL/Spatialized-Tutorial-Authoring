@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 /*** Import Helpers ***/
 using StepDetails = TutorialStore.Tutorial.StepDetails;
@@ -106,7 +107,7 @@ public class TutorialStore {
     Tutorial tutorial = tutorials.Find(t => t.id == tutorialId);
 
     // Delete each step in the tutorial including it's video.
-    foreach (var step in tutorial.steps) {
+    foreach (var step in tutorial.steps.ToList()) {
       DeleteStep(step.id);
     }
 
