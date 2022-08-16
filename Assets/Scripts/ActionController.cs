@@ -20,7 +20,6 @@ using SceneState = SceneController.SceneState;
  * The entry point of the application is the SceneController.
  */
 public class ActionController : MonoBehaviour {
-  
   #region Unity Editor Fields
   /** The GameObject to instantiate when "Mark"ing a location */
   public GameObject stepPrefab;
@@ -46,6 +45,8 @@ public class ActionController : MonoBehaviour {
   #region Static References
   private static ActionController _instance;
   public static ActionController Instance => _instance;
+
+  public static TutorialStore TutorialStore => SceneController.TutorialStore;
   #endregion
 
   #region Unity Methods
@@ -64,7 +65,7 @@ public class ActionController : MonoBehaviour {
     _speechInputHandler = GetComponent<SpeechInputHandler>();
     _interactable       = GetComponent<Interactable>();
 
-    _dictationHandler   = GetComponent<DictationHandler>();
+    _dictationHandler = GetComponent<DictationHandler>();
 
     /*** Dictation Handler Event Setup ***/
     Debug.Log("Setting Up DictationHandler Callbacks");
@@ -134,7 +135,7 @@ public class ActionController : MonoBehaviour {
     Pose       pose     = new Pose(position, rotation);
 
     // Create a step in the TutorialSore
-    StepDetails stepDetails = SceneController.TutorialStore.AddStep(pose);
+    StepDetails stepDetails = TutorialStore.CreateStep(pose);
 
     // Create the Step GameObject
     InstantiateStep(stepDetails);
@@ -170,9 +171,7 @@ public class ActionController : MonoBehaviour {
 
     // Start video recording (pass along the video file name)
     Debug.Log("Video Recording: Starting");
-    int    tutorialId    = SceneController.TutorialStore.tutorials.Last().id;
-    string videoFileName = "tutorial " + tutorialId + " " + stepDetails.name;
-    CameraProvider.StartRecording(videoFileName);
+    CameraProvider.StartRecording(stepDetails.id);
 
     // Start speech-to-text recording
     // TODO: We should use the Unity Dictation API since we can dispose and release the resources.
@@ -187,7 +186,7 @@ public class ActionController : MonoBehaviour {
   /** When saying "Mark" */
   public void OnVoiceCommandMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedButton() != null) return; // Don't allow if clicked on a game object.
+    if (ClickedInteractable() != null) return; // Don't allow if clicked on a game object.
     if (ClickedStep() != null) return; // Don't allow if clicked on a Step.
 
     Debug.Log("VoiceCommandMark()");
@@ -198,14 +197,16 @@ public class ActionController : MonoBehaviour {
   /** When "Air Click"ing */
   public void AirClickMark() {
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    if (ClickedStep() != null) { // Don't create step on another step. Pass the click along
-      StepController stepController = ClickedStep();
-      stepController.OnClick();
+    
+    if (ClickedInteractable() != null) { // Pass event to interactable if exist
+      Interactable clickedGoInteractable = ClickedInteractable();
+      clickedGoInteractable.OnClick.Invoke();
       return;
     }
-    if (ClickedButton() != null) { // Pass click event to child so that children elements can be clicked.
-      Interactable clickedGoInteractable = ClickedButton().GetComponentInParent<Interactable>();
-      if (clickedGoInteractable != null) clickedGoInteractable.OnClick.Invoke();
+    
+    if (ClickedStep() != null) { // Pass event to Step if exist
+      StepController stepController = ClickedStep();
+      stepController.OnClick();
       return;
     }
 
@@ -234,10 +235,40 @@ public class ActionController : MonoBehaviour {
     SceneController.State = SceneState.CreateStep;
   }
 
+  /**
+   * Delete a Step from the Unity Scene and the TutorialStore.
+   *
+   * If this step is not the last step, then update all subsequent steps:
+   * - ID
+   * - Name
+   * - VideoFilePath
+   */
+  public void DeleteStep(StepDetails stepDetails) {
+    // Validate that we are in the right state to delete a step
+    if (SceneController.State != SceneState.CreateStep) {
+      Debug.LogError("DeleteStep(): ERROR - Not in \"Create Step\" state");
+    }
+
+    Debug.Log("DeleteStep(Step " + stepDetails.id + ")");
+
+    // Remove all steps shown in the Unity scene
+    Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
+    foreach (var step in tutorial.steps) {
+      if (GameObject.Find(step.id) != null) Destroy(GameObject.Find(step.id));
+    }
+
+    // Delete step from TutorialStore
+    TutorialStore.DeleteStep(stepDetails.id);
+
+    // Instantiate all Steps to the Unity Scene (without the deleted one)
+    // TODO: The reference of this object might be out of sync... 
+    LoadTutorial(tutorial);
+  }
+
   /** Render tutorial steps */
   public void LoadTutorial(Tutorial tutorial) {
     Debug.Log("LoadTutorial(" + tutorial.name + ")");
-    
+
     // For each step in the tutorial, instantiate it to the scene.
     foreach (StepDetails stepDetails in tutorial.steps) {
       Debug.Log("Found Step " + stepDetails.id + " in store");
@@ -267,20 +298,19 @@ public class ActionController : MonoBehaviour {
   }
 
   /**
-   * Remove all the Tutorial data, videos and GameObjects in the scene.
-   * TODO: Move this to the Guidance scene.
+   * An easy way to delete all the data in the streaming assets folder
    */
   public void ResetTutorials() {
     Debug.Log("ResetTutorials()");
-
-    // Delete all files in the Streaming Assets directory.
-    string[] videoFiles = Directory.GetFiles(Application.streamingAssetsPath);
-    foreach (string videoFile in videoFiles) {
-      File.Delete(videoFile);
+    
+    // Delete all tutorials from the TutorialStore
+    foreach(var tutorial in TutorialStore.tutorials.ToList()) {
+      TutorialStore.DeleteTutorial(tutorial.id);
     }
 
-    // Also delete all GameObjects tagged as ToolTip so that they don't appear anymore.
-    RemoveSteps();
+    // Delete all files in the Streaming Assets directory.
+    string[] files = Directory.GetFiles(Application.streamingAssetsPath);
+    foreach (string file in files) { File.Delete(file); }
 
     // Reset the TutorialStore
     SceneController.TutorialStore.Reset();
@@ -317,21 +347,26 @@ public class ActionController : MonoBehaviour {
   #endregion
 
   /***** Private Methods *****/
-  // TODO: Maybe name this "ClickedInteractable" and pass along the click.
-  private GameObject ClickedButton() {
+  private Interactable ClickedInteractable() {
     GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
+
+    // Check if interactable
+    if(clickedGo != null && clickedGo.GetComponent<Interactable>() != null) {
+      return clickedGo.GetComponent<Interactable>();
+    }
     
-    if(clickedGo != null && clickedGo.CompareTag("Button")) {
-      return clickedGo;
+    // Check if parent is interactable
+    if(clickedGo != null && clickedGo.GetComponentInParent<Interactable>() != null) {
+      return clickedGo.transform.parent.GetComponent<Interactable>();
     }
 
     return null;
   }
-  
+
   private StepController ClickedStep() {
     GameObject clickedGo = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.CurrentPointerTarget;
-    
-    if( clickedGo != null && clickedGo.GetComponentInParent<StepController>() != null) {
+
+    if (clickedGo != null && clickedGo.GetComponentInParent<StepController>() != null) {
       return clickedGo.GetComponentInParent<StepController>();
     }
 

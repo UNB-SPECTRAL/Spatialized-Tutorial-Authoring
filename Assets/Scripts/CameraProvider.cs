@@ -109,7 +109,7 @@ public class CameraProvider : MonoBehaviour {
     // Update each resolutions refresh rate (its not included in the previous call)
     for (var i = 0; i < cameraResolutions.Length; i++) {
       cameraResolutions[i].refreshRate = (int)VideoCapture.GetSupportedFrameRatesForResolution(cameraResolutions[i]).Max();
-      Debug.Log($"Resolution: {cameraResolutions[i].width}x{cameraResolutions[i].height}@{cameraResolutions[i].refreshRate}");
+      // Debug.Log($"Resolution: {cameraResolutions[i].width}x{cameraResolutions[i].height}@{cameraResolutions[i].refreshRate}");
     }
     
     // For each standard resolution, find the closest resolution that the camera can support

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Video;
 using Tutorial = TutorialStore.Tutorial;
+using StepDetails = TutorialStore.Tutorial.StepDetails;
 
 /** Handler for the applications menus and buttons */
 public class SceneController : MonoBehaviour {
@@ -147,6 +148,12 @@ public class SceneController : MonoBehaviour {
     State = SceneState.ViewTutorials;
   }
 
+  public void OnResetButtonPress() {
+    Debug.Log("OnResetButtonPress()");
+    ActionController.Instance.ResetTutorials(); // Delete all the data
+    State = SceneState.MainMenu;
+  }
+
   /*** Authoring Scene ***/
   public void OnCreateTutorialButtonPress() {
     Debug.Log("OnCreateTutorialButtonPress()");
@@ -165,6 +172,13 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.EndMarking(); // End recording
     State = SceneState.CreateStep;
   }
+  
+  public void OnDeleteStepButtonPress(StepDetails stepDetails) {
+    Debug.Log("OnDeleteStepButtonPress()");
+    ActionController.Instance.DeleteStep(stepDetails); // Delete a step
+    State = SceneState.CreateStep;
+  }
+  
 
   /*** Guidance Scene ***/
   public void OnTutorialListButtonPress(Tutorial tutorial) {
@@ -175,7 +189,9 @@ public class SceneController : MonoBehaviour {
 
   public void OnTutorialDeleteButtonPress(Tutorial tutorial) {
     Debug.Log("OnTutorialDeleteButtonPress(" + tutorial.name + ")");
+    tutorialList.SetActive(false); // Disable the tutorial list so we can delete the tutorial
     TutorialStore.DeleteTutorial(tutorial.id); // Delete tutorial from the store
+    tutorialList.SetActive(true); // Enable to tutorial list so we can show the updated list
     State = SceneState.ViewTutorials;
   }
   
@@ -212,7 +228,7 @@ public class SceneController : MonoBehaviour {
    */
   public static void PlayingStepVideo() {
     if (State == SceneState.CreateStep) State = SceneState.CreateStepPlaying;
-    if (State == SceneState.ViewSteps)   State = SceneState.ViewStepPlaying;
+    else if (State == SceneState.ViewSteps)   State = SceneState.ViewStepPlaying;
     else Debug.LogError("PlayingStepVideo() called in an invalid state: " + State);
   }
   
@@ -223,7 +239,7 @@ public class SceneController : MonoBehaviour {
    */
   public static void PausingOrStopStepVideo() {
     if (State == SceneState.CreateStepPlaying) State = SceneState.CreateStep;
-    if (State == SceneState.ViewStepPlaying)   State = SceneState.ViewSteps;
+    else if (State == SceneState.ViewStepPlaying)   State = SceneState.ViewSteps;
     else Debug.LogError("PlayingStepVideo() called in an invalid state: " + State);
   }
 }
