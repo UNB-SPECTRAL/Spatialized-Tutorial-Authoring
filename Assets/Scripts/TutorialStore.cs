@@ -234,7 +234,7 @@ public class TutorialStore {
       /** Constructor */
       public StepDetails(string tutorialId, int id, Pose pose) {
         this.id    = tutorialId + "_step_" + id;
-        name       = "Step " + id;
+        name       = "" + id;
         globalPose = pose;
       }
     }
