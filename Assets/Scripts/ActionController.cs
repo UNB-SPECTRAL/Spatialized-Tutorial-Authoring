@@ -254,14 +254,18 @@ public class ActionController : MonoBehaviour {
     // Remove all steps shown in the Unity scene
     Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
     foreach (var step in tutorial.steps) {
-      if (GameObject.Find(step.id) != null) Destroy(GameObject.Find(step.id));
+      GameObject stepToDestroy = GameObject.Find(step.id);
+      if (stepToDestroy != null) {
+        StepController stepToDestroyStepController = stepToDestroy.GetComponent<StepController>();
+        stepToDestroyStepController.isBeingDestroyed = true; // So that we can know that it will be destroyed within the game loop.
+        Destroy(stepToDestroy);
+      }
     }
 
     // Delete step from TutorialStore
     TutorialStore.DeleteStep(stepDetails.id);
 
     // Instantiate all Steps to the Unity Scene (without the deleted one)
-    // TODO: The reference of this object might be out of sync... 
     LoadTutorial(tutorial);
   }
 
@@ -276,10 +280,14 @@ public class ActionController : MonoBehaviour {
       // Before instantiation, check if the step is already in the scene.
       GameObject existingStep = GameObject.Find(stepDetails.name);
 
-      // If the ToolTip does exist, skip it.
+      // If the Step does exist
       if (existingStep != null) {
-        Debug.Log("Step " + stepDetails.id + " already exists in scene.");
-        continue;
+        StepController stepToDestroyStepController = existingStep.GetComponent<StepController>();
+        // And it will not be destroyed, then continue
+        if (stepToDestroyStepController != null && !stepToDestroyStepController.isBeingDestroyed) {
+          Debug.Log(stepDetails.id + " already exists in scene. Skipping");
+          continue;
+        }
       }
 
       // Otherwise, instantiate it.

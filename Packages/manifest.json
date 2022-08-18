@@ -47,6 +47,7 @@
     "com.unity.modules.xr": "1.0.0",
     "com.microsoft.mixedreality.toolkit.tools": "file:MixedReality/com.microsoft.mixedreality.toolkit.tools-2.8.2.tgz",
     "com.microsoft.mixedreality.worldlockingtools": "file:MixedReality/com.microsoft.mixedreality.worldlockingtools-1.5.9.tgz",
-    "com.microsoft.mixedreality.worldlockingsamples": "file:MixedReality/com.microsoft.mixedreality.worldlockingsamples-1.5.9.tgz"
+    "com.microsoft.mixedreality.worldlockingsamples": "file:MixedReality/com.microsoft.mixedreality.worldlockingsamples-1.5.9.tgz",
+    "com.microsoft.spatialaudio.spatializer.unity": "file:MixedReality/com.microsoft.spatialaudio.spatializer.unity-2.0.37.tgz"
   }
 }

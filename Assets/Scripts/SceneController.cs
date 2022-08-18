@@ -13,9 +13,9 @@ public class SceneController : MonoBehaviour {
   /*** Authoring Scene ***/
   [Header("Authoring Scene")] 
   public GameObject createTutorialButton;
-  public GameObject stopTutorialButton;
+  public GameObject stepList;
   public GameObject stopStepRecordingButton;
-  
+
   /*** Guidance Scene ***/
   [Header("Guidance Scene")] 
   public GameObject tutorialList;
@@ -73,7 +73,7 @@ public class SceneController : MonoBehaviour {
         mainMenu.SetActive(true);
 
         createTutorialButton.SetActive(false);
-        stopTutorialButton.SetActive(false);
+        stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
@@ -83,7 +83,7 @@ public class SceneController : MonoBehaviour {
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(true);
-        stopTutorialButton.SetActive(false);
+        stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
@@ -94,8 +94,9 @@ public class SceneController : MonoBehaviour {
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
-        stopTutorialButton.SetActive(true);
+        stepList.SetActive(true);
         stopStepRecordingButton.SetActive(false);
+        
 
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
@@ -104,7 +105,7 @@ public class SceneController : MonoBehaviour {
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
-        stopTutorialButton.SetActive(false);
+        stepList.SetActive(false);
         stopStepRecordingButton.SetActive(true);
 
         tutorialList.SetActive(false);
@@ -115,7 +116,7 @@ public class SceneController : MonoBehaviour {
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
-        stopTutorialButton.SetActive(false);
+        stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(true);
@@ -127,7 +128,7 @@ public class SceneController : MonoBehaviour {
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
-        stopTutorialButton.SetActive(false);
+        stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
@@ -189,9 +190,7 @@ public class SceneController : MonoBehaviour {
 
   public void OnTutorialDeleteButtonPress(Tutorial tutorial) {
     Debug.Log("OnTutorialDeleteButtonPress(" + tutorial.name + ")");
-    tutorialList.SetActive(false); // Disable the tutorial list so we can delete the tutorial
     TutorialStore.DeleteTutorial(tutorial.id); // Delete tutorial from the store
-    tutorialList.SetActive(true); // Enable to tutorial list so we can show the updated list
     State = SceneState.ViewTutorials;
   }
   
