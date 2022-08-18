@@ -73,3 +73,4 @@ crashlytics-build.properties
 
 # Ignore Streaming Assets
 /[Aa]ssets/[Ss]treamingAssets/
+/[Aa]ssets/[Ss]amples/

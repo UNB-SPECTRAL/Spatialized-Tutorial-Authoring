@@ -19,6 +19,7 @@ public class StepController : MonoBehaviour {
   /*** Public Variables ***/
   [HideInInspector]
   public StepDetails stepDetails;
+  public bool isBeingDestroyed = false;
   
   /*** Private Variables ***/
   private ToolTip _toolTip;
