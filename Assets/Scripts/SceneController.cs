@@ -1,5 +1,6 @@
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.WorldLocking.Core;
 using UnityEngine;
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
@@ -72,10 +73,13 @@ public class SceneController : MonoBehaviour {
     State         = SceneState.MainMenu;
     tutorialStore = TutorialStore.Load();
     
-    /***** Pointers *****/
+    /***** Settings *****/
     // Set the Gaze Pointer to always be on (since it is not when hand cursors
     // are enabled).
     PointerUtils.SetGazePointerBehavior(PointerBehavior.AlwaysOn);
+    
+    // Disable the HoloLens profiler
+    CoreServices.DiagnosticsSystem.ShowProfiler = false;
   }
 
   /*** Private Methods ***/
