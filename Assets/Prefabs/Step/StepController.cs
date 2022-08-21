@@ -151,7 +151,7 @@ public class StepController : MonoBehaviour {
         videoPlayer.frame = 1;
         
         // Notify the SceneController
-        SceneController.PausingOrStopStepVideo();
+        SceneController.PauseOrStopStepVideo();
 
         // Stop the video
         // TODO: This was trying to un-prepare the video to save on RAM.
@@ -172,30 +172,30 @@ public class StepController : MonoBehaviour {
    */
   public void OnClick() {
     // Check if a click event can be handled
-    if(!SceneController.CanClickStep(videoPlayer)) {
-      Debug.LogWarning("Step " + stepDetails.id + " OnClick(): ERROR - In Incorrect State");
+    if(!SceneController.CanClickStep()) {
+      Debug.LogWarning("Step " + stepDetails.id + " OnClick(): ERROR - In Incorrect State: " + SceneController.State);
       return;
     }
     
-    Debug.Log("Step " + stepDetails.id + " clicked");
+    Debug.Log("Step " + stepDetails.id + " Clicked");
 
     // If the video is not playing, play it.
     if(videoPlayer.isPlaying == false) {
+      // Notify the SceneController so that any existing videos can be stopped.
+      SceneController.PlayStepVideo(this);
+      
       // Play the video
       Debug.Log("Playing Video");
       videoPlayer.Play();
-      
-      // Notify the SceneController
-      SceneController.PlayingStepVideo();
     }
     // If the video is not playing, pause it
     else {
+      // Notify the SceneController that this video is not being played anymore
+      SceneController.PauseOrStopStepVideo();
+      
       // Pause the video
       Debug.Log("Pausing Video"); 
       videoPlayer.Pause();
-      
-      // Notify the SceneController
-      SceneController.PausingOrStopStepVideo();
     }
   }
   #endregion

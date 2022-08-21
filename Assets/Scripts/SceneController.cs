@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Video;
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
 
@@ -7,17 +6,17 @@ using StepDetails = TutorialStore.Tutorial.StepDetails;
 public class SceneController : MonoBehaviour {
   /***** Unity Editor *****/
   /*** Main Menu Scene ***/
-  [Header("Main Menu Scene")] 
+  [Header("Main Menu Scene")]
   public GameObject mainMenu;
 
   /*** Authoring Scene ***/
-  [Header("Authoring Scene")] 
+  [Header("Authoring Scene")]
   public GameObject createTutorialButton;
   public GameObject stepList;
   public GameObject stopStepRecordingButton;
 
   /*** Guidance Scene ***/
-  [Header("Guidance Scene")] 
+  [Header("Guidance Scene")]
   public GameObject tutorialList;
   public GameObject tutorialListBackButton;
 
@@ -25,35 +24,41 @@ public class SceneController : MonoBehaviour {
   public enum SceneState {
     /* Main Menu */
     MainMenu,
+
     /* Authoring */
     CreateTutorial,
     CreateStep, // When we can "Mark" a step, view a step recording or end the tutorial.
     CreateStepRecording,
     CreateStepPlaying,
-    /* Guidance */
-    ViewTutorials,    // When choosing a tutorial to view its steps
-    ViewSteps,        // When viewing steps of a tutorial
-    ViewStepPlaying,  // When viewing a step video of a tutorial
-  };
 
-  [HideInInspector]
-  private SceneState state;
+    /* Guidance */
+    ViewTutorials, // When choosing a tutorial to view its steps
+    ViewSteps, // When viewing steps of a tutorial
+    ViewStepPlaying, // When viewing a step video of a tutorial
+  };
 
   [HideInInspector]
   public TutorialStore tutorialStore;
 
-  /***** Static Reference *****/
+  /***** Public Static Reference *****/
   public static SceneController Instance;
 
   public static SceneState State {
-    get => Instance.state;
+    get => Instance._state;
     set {
-    Instance.state = value;
-    Instance.UpdateState(value);
+      Instance._state = value;
+      Instance.UpdateState(value);
     }
   }
 
   public static TutorialStore TutorialStore => Instance.tutorialStore;
+
+  /***** Private Variables *****/
+  private SceneState _state; // Holds the current state of the scene.
+
+  // Holds the StepController which is currently playing a video. This is used
+  // to quickly reference a StepController without needing to search for it.
+  private StepController _activeStepController;
 
   /*** Unity Methods ***/
   void Awake() {
@@ -65,7 +70,7 @@ public class SceneController : MonoBehaviour {
     State         = SceneState.MainMenu;
     tutorialStore = TutorialStore.Load();
   }
-  
+
   /*** Private Methods ***/
   void UpdateState(SceneState state) {
     switch (state) {
@@ -96,7 +101,7 @@ public class SceneController : MonoBehaviour {
         createTutorialButton.SetActive(false);
         stepList.SetActive(true);
         stopStepRecordingButton.SetActive(false);
-        
+
 
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
@@ -173,13 +178,13 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.EndMarking(); // End recording
     State = SceneState.CreateStep;
   }
-  
+
   public void OnDeleteStepButtonPress(StepDetails stepDetails) {
     Debug.Log("OnDeleteStepButtonPress()");
     ActionController.Instance.DeleteStep(stepDetails); // Delete a step
     State = SceneState.CreateStep;
   }
-  
+
 
   /*** Guidance Scene ***/
   public void OnTutorialListButtonPress(Tutorial tutorial) {
@@ -193,7 +198,7 @@ public class SceneController : MonoBehaviour {
     TutorialStore.DeleteTutorial(tutorial.id); // Delete tutorial from the store
     State = SceneState.ViewTutorials;
   }
-  
+
   public void OnTutorialListBackButtonPress() {
     Debug.Log("OnTutorialListBacButtonClick()");
     State = SceneState.MainMenu;
@@ -204,41 +209,65 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.RemoveSteps(); // Unload tutorial steps from the scene
     State = SceneState.ViewTutorials;
   }
-  
+
   /***** Static Helpers *****/
   /**
    * A step can only be clicked in the following cases:
-   * - In the "Create Step" state
-   * - In the "Create Step Playing" state while the step video is playing.
-   * - In the "View Tutorial" state (since we can view a step recording)
-   * - In the "View Step Playing" state while the step video is playing.
+   * - In the "Create Step" state.
+   * - In the "Create Step Playing" state.
+   * - In the "View Steps" state (since we can view a step recording).
+   * - In the "View Step Playing" state.
    */
-  public static bool CanClickStep(VideoPlayer videoPlayer) {
-    if (State == SceneState.CreateStep || State == SceneState.ViewSteps) return true;
-    if(State == SceneState.CreateStepPlaying && videoPlayer.isPlaying) return true;
-    if (State == SceneState.ViewStepPlaying && videoPlayer.isPlaying) return true;
-    return false;
+  public static bool CanClickStep() {
+    return State == SceneState.CreateStep
+           || State == SceneState.CreateStepPlaying
+           || State == SceneState.ViewSteps
+           || State == SceneState.ViewStepPlaying;
   }
-  
+
   /**
-   * When a step video is being played, update the state accordingly:
-   * - If in "Create Step", then "Create Step Playing"
-   * - if in "View Tutorial", then "View Step Playing"
+   * When a StepController is about to play a video, it calls this method to
+   * notify the SceneController. This does the following:
+   * - Pauses any active videos.
+   * - Update the activeStepController reference to quickly pause the video
+   * if one is playing while another StepController is pressed.
+   * - Update the SceneController step.
    */
-  public static void PlayingStepVideo() {
-    if (State == SceneState.CreateStep) State = SceneState.CreateStepPlaying;
-    else if (State == SceneState.ViewSteps)   State = SceneState.ViewStepPlaying;
-    else Debug.LogError("PlayingStepVideo() called in an invalid state: " + State);
+  public static void PlayStepVideo(StepController stepController) {
+    // Check if there is an existing stepController that is/was playing a video.
+    if (Instance._activeStepController != null) {
+      // Pause the video (it could already be paused)
+      // Not calling PauseOrStopVideo() because we don't want to update the
+      // scene state and then update it back.
+      Instance._activeStepController.videoPlayer.Pause();
+    }
+
+    // Replace the active stepController with the new one.
+    Instance._activeStepController = stepController;
+
+    // Update the state if needed (since we could be pausing an active video and
+    // would already be in these states).
+    if (State == SceneState.CreateStep) State     = SceneState.CreateStepPlaying;
+    else if (State == SceneState.ViewSteps) State = SceneState.ViewStepPlaying;
   }
-  
+
   /**
-   * When a step video is being paused, update the state accordingly:
-   * - If in "Create Step Playing", then "Create Step"
-   * - if in "View Step Playing", then "View Tutorial"
+   * When a StepController is about to pause/stop playing a video, it calls this
+   * method to do the following:
+   * - Update the activeStepController reference to null.
+   * - Update the SceneController state.
    */
-  public static void PausingOrStopStepVideo() {
-    if (State == SceneState.CreateStepPlaying) State = SceneState.CreateStep;
-    else if (State == SceneState.ViewStepPlaying)   State = SceneState.ViewSteps;
-    else Debug.LogError("PlayingStepVideo() called in an invalid state: " + State);
+  public static void PauseOrStopStepVideo() {
+    // Remove the reference to the active stepController since the StepController
+    // who has called this function is not longer playing a video and thus does
+    // not need to be referenced. Note that we pause videos in this class via
+    // referencing the `videoPlayer.Pause()` and therefore do not call this 
+    // function.
+    Instance._activeStepController = null;
+
+    // Update the state accordingly.
+    if (State == SceneState.CreateStepPlaying) State    = SceneState.CreateStep;
+    else if (State == SceneState.ViewStepPlaying) State = SceneState.ViewSteps;
+    else Debug.LogError("PauseOrStopStepVideo() called in an invalid state: " + State);
   }
 }
