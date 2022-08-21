@@ -1,3 +1,5 @@
+using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Input;
 using UnityEngine;
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
@@ -69,6 +71,11 @@ public class SceneController : MonoBehaviour {
   void Start() {
     State         = SceneState.MainMenu;
     tutorialStore = TutorialStore.Load();
+    
+    /***** Pointers *****/
+    // Set the Gaze Pointer to always be on (since it is not when hand cursors
+    // are enabled).
+    PointerUtils.SetGazePointerBehavior(PointerBehavior.AlwaysOn);
   }
 
   /*** Private Methods ***/
