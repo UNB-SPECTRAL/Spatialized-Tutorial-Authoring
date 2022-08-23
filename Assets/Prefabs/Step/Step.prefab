@@ -269,7 +269,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Step 0: This is contentn'
+  m_text: Tooltip Text
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: afc8299d5d5bbd440a0616c8ecbc7217, type: 2}
   m_sharedMaterial: {fileID: 21340371490990018, guid: afc8299d5d5bbd440a0616c8ecbc7217, type: 2}
@@ -1209,6 +1209,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   videoPlayer: {fileID: 4520570873609564591}
   deleteButton: {fileID: 4832183322367861710}
+  background: {fileID: 5355749801973152014}
+  unviewedMaterial: {fileID: 2100000, guid: ec72a3a105768f746b556a8dfdae61a8, type: 2}
+  viewedMaterial: {fileID: 2100000, guid: 552f1a3245d3edc4a96fe296c950532a, type: 2}
   stepDetails:
     id: 
     name: 
@@ -1217,6 +1220,7 @@ MonoBehaviour:
       rotation: {x: 0, y: 0, z: 0, w: 0}
     videoFilePath: 
     transcript: 
+  isBeingDestroyed: 0
 --- !u!114 &5356400354427446074
 MonoBehaviour:
   m_ObjectHideFlags: 0

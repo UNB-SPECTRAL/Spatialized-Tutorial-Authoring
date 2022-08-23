@@ -16,6 +16,11 @@ public class StepController : MonoBehaviour {
   public VideoPlayer videoPlayer; // The video player game object.
   public GameObject  deleteButton; // The step delete button game object.
   
+  [Header("Background")]
+  public GameObject background;       // The step background game object.
+  public Material   unviewedMaterial; // The normal material of the step.
+  public Material   viewedMaterial;   // The highlighted material of the step.
+  
   /*** Public Variables ***/
   [HideInInspector]
   public StepDetails stepDetails;
@@ -23,6 +28,7 @@ public class StepController : MonoBehaviour {
   
   /*** Private Variables ***/
   private ToolTip    _toolTip;
+  
   // For handling the Step height change.
   private GameObject _contentParent; // The content parent game object.
   private float      _contentParentYPosition; // Original Y position of the content parent.
@@ -46,7 +52,10 @@ public class StepController : MonoBehaviour {
     _toolTip = gameObject.GetComponent<ToolTip>();
     _contentParent = gameObject.transform.Find("Pivot/ContentParent").gameObject;
     _contentParentYPosition = _contentParent.transform.localPosition.y;
-    Debug.Log("ContentParentYPosition: " + _contentParentYPosition);
+    
+    /*** Background Update ***/
+    // Set the background material to the unviewed material.
+    background.GetComponent<Renderer>().material = unviewedMaterial;
 
     /*** Step Configuration ***/
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
@@ -189,7 +198,7 @@ public class StepController : MonoBehaviour {
       };
     }));
   }
-  
+
   #region Public Methods
   /**
    * When the RecordSceneController is in IDLE state, handle the OnClick event
@@ -203,6 +212,9 @@ public class StepController : MonoBehaviour {
     }
     
     Debug.Log("Step " + stepDetails.id + " Clicked");
+    
+    // Update the background material to show that the Step has been viewed.
+    background.GetComponent<Renderer>().material = viewedMaterial;
 
     // If the video is not playing, play it.
     if(videoPlayer.isPlaying == false) {
@@ -223,5 +235,5 @@ public class StepController : MonoBehaviour {
       videoPlayer.Pause();
     }
   }
-  #endregion
+  #endregion 
 }
