@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
 using Microsoft.MixedReality.WorldLocking.Core;
 using UnityEngine;
 using Tutorial = TutorialStore.Tutorial;
@@ -22,6 +24,7 @@ public class SceneController : MonoBehaviour {
   [Header("Guidance Scene")]
   public GameObject tutorialList;
   public GameObject tutorialListBackButton;
+  public GameObject chevron; // Used for indicating the next step.
 
   /***** Public Variables *****/
   public enum SceneState {
@@ -57,7 +60,8 @@ public class SceneController : MonoBehaviour {
   public static TutorialStore TutorialStore => Instance.tutorialStore;
 
   /***** Private Variables *****/
-  private SceneState _state; // Holds the current state of the scene.
+  private SceneState       _state; // Holds the current state of the scene.
+  private List<GameObject> stepGameObjects; // Holds a reference to instantiated step game objects.
 
   // Holds the StepController which is currently playing a video. This is used
   // to quickly reference a StepController without needing to search for it.
@@ -73,7 +77,7 @@ public class SceneController : MonoBehaviour {
     State         = SceneState.MainMenu;
     tutorialStore = TutorialStore.Load();
     
-    /***** Settings *****/
+    /***** Initialization *****/
     // Set the Gaze Pointer to always be on (since it is not when hand cursors
     // are enabled).
     PointerUtils.SetGazePointerBehavior(PointerBehavior.AlwaysOn);
@@ -87,13 +91,14 @@ public class SceneController : MonoBehaviour {
     switch (state) {
       case SceneState.MainMenu:
         mainMenu.SetActive(true);
-
+        
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
-
+        
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
         break;
       case SceneState.CreateTutorial:
         mainMenu.SetActive(false);
@@ -101,9 +106,10 @@ public class SceneController : MonoBehaviour {
         createTutorialButton.SetActive(true);
         stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
-
+ 
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
         break;
       case SceneState.CreateStep:
       case SceneState.CreateStepPlaying:
@@ -112,10 +118,10 @@ public class SceneController : MonoBehaviour {
         createTutorialButton.SetActive(false);
         stepList.SetActive(true);
         stopStepRecordingButton.SetActive(false);
-
-
+        
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
         break;
       case SceneState.CreateStepRecording:
         mainMenu.SetActive(false);
@@ -126,6 +132,7 @@ public class SceneController : MonoBehaviour {
 
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
         break;
       case SceneState.ViewTutorials:
         Debug.Log("State: " + state);
@@ -134,9 +141,10 @@ public class SceneController : MonoBehaviour {
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
         stopStepRecordingButton.SetActive(false);
-
+        
         tutorialList.SetActive(true);
         tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
         break;
       case SceneState.ViewSteps:
       case SceneState.ViewStepPlaying:
@@ -149,6 +157,7 @@ public class SceneController : MonoBehaviour {
 
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(true);
+        chevron.SetActive(true); UpdateChevron(); // Enable and update the chevron directional target.
         break;
     }
   }
@@ -180,7 +189,7 @@ public class SceneController : MonoBehaviour {
 
   public void OnStopTutorialButtonPress() {
     Debug.Log("OnStopTutorialButtonPress()");
-    ActionController.Instance.RemoveSteps(); // Hide steps when returning to main menu.
+    ActionController.Instance.RemoveStepsFromScene(); // Hide steps when returning to main menu.
     State = SceneState.MainMenu;
   }
 
@@ -195,12 +204,11 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.DeleteStep(stepDetails); // Delete a step
     State = SceneState.CreateStep;
   }
-
-
+  
   /*** Guidance Scene ***/
   public void OnTutorialListButtonPress(Tutorial tutorial) {
     Debug.Log("OnTutorialListButtonClick(" + tutorial.name + ")");
-    ActionController.Instance.LoadTutorial(tutorial); // Load tutorial to the scene
+    stepGameObjects = ActionController.Instance.LoadTutorial(tutorial); // Load tutorial to the scene
     State = SceneState.ViewSteps;
   }
 
@@ -211,13 +219,13 @@ public class SceneController : MonoBehaviour {
   }
 
   public void OnTutorialListBackButtonPress() {
-    Debug.Log("OnTutorialListBacButtonClick()");
+    Debug.Log("OnTutorialListBackButtonClick()");
     State = SceneState.MainMenu;
   }
 
   public void OnViewStepsBackButtonPress() {
-    Debug.Log("OnTutorialBackButtonPress()");
-    ActionController.Instance.RemoveSteps(); // Unload tutorial steps from the scene
+    Debug.Log("OnViewStepsBackButtonPress()");
+    ActionController.Instance.RemoveStepsFromScene(); // Unload tutorial steps from the scene
     State = SceneState.ViewTutorials;
   }
 
@@ -245,6 +253,9 @@ public class SceneController : MonoBehaviour {
    * - Update the SceneController step.
    */
   public static void PlayStepVideo(StepController stepController) {
+    // Update the Chevron to point to the next step
+    UpdateChevron();
+    
     // Check if there is an existing stepController that is/was playing a video.
     if (Instance._activeStepController != null) {
       // Pause the video (it could already be paused)
@@ -280,5 +291,17 @@ public class SceneController : MonoBehaviour {
     if (State == SceneState.CreateStepPlaying) State    = SceneState.CreateStep;
     else if (State == SceneState.ViewStepPlaying) State = SceneState.ViewSteps;
     else Debug.LogError("PauseOrStopStepVideo() called in an invalid state: " + State);
+  }
+  
+  /** Updates the Chevron directional target */
+  static void UpdateChevron() {
+    // Only update the Chevron if it is active.
+    if (Instance.chevron.activeSelf == false) return;
+    
+    // Before enabling, set the `directionalTarget` to the first un-viewed step
+    foreach (var stepGameObject in Instance.stepGameObjects) {
+      if (stepGameObject.GetComponent<StepController>().isViewed) continue;
+      Instance.chevron.GetComponent<DirectionalIndicator>().DirectionalTarget = stepGameObject.transform;
+    }
   }
 }

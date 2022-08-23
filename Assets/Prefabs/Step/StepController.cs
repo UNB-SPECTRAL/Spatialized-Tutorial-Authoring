@@ -25,6 +25,7 @@ public class StepController : MonoBehaviour {
   [HideInInspector]
   public StepDetails stepDetails;
   public bool isBeingDestroyed;
+  public bool isViewed;
   
   /*** Private Variables ***/
   private ToolTip    _toolTip;
@@ -214,6 +215,7 @@ public class StepController : MonoBehaviour {
     Debug.Log("Step " + stepDetails.id + " Clicked");
     
     // Update the background material to show that the Step has been viewed.
+    isViewed = true;
     background.GetComponent<Renderer>().material = viewedMaterial;
 
     // If the video is not playing, play it.

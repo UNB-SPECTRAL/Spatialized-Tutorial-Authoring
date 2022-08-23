@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.MixedReality.Toolkit;
@@ -144,8 +145,8 @@ public class ActionController : MonoBehaviour {
     StartRecording(stepDetails);
   }
 
-  /** Given StepDetails, instantiate a Step in the scene. */
-  private void InstantiateStep(StepDetails stepDetails) {
+  /** Given StepDetails, instantiate a Step in the scene and return it's reference. */
+  private GameObject InstantiateStep(StepDetails stepDetails) {
     // Instantiate the Step GameObject with the correct parent.
     var toolTipGo = Instantiate(stepPrefab, stepPrefabParent);
 
@@ -155,6 +156,8 @@ public class ActionController : MonoBehaviour {
     // Add world locking
     // TODO: Is this needed anymore?
     toolTipGo.AddComponent<ToggleWorldAnchor>().AlwaysLock = true;
+    
+    return toolTipGo;
   }
 
   /** Given a ToolTipDetail, start recording a video for it */
@@ -270,8 +273,11 @@ public class ActionController : MonoBehaviour {
   }
 
   /** Render tutorial steps */
-  public void LoadTutorial(Tutorial tutorial) {
+  public List<GameObject> LoadTutorial(Tutorial tutorial) {
     Debug.Log("LoadTutorial(" + tutorial.name + ")");
+    
+    // Create a GameObject list to store the reference of all instantiated steps.
+    List<GameObject> stepGameObjects = new List<GameObject>();
 
     // For each step in the tutorial, instantiate it to the scene.
     foreach (StepDetails stepDetails in tutorial.steps) {
@@ -292,13 +298,17 @@ public class ActionController : MonoBehaviour {
 
       // Otherwise, instantiate it.
       // Instantiate the tooltip using the given prefab and set its parent to the playspace.
-      InstantiateStep(stepDetails);
+      stepGameObjects.Add(InstantiateStep(stepDetails));
     }
+    
+    // Return the sorted game objects (first element is the first step)
+    stepGameObjects.Reverse();
+    return stepGameObjects;
   }
 
   /** Remove Step GameObject from scene. */
-  public void RemoveSteps() {
-    Debug.Log("RemoveSteps()");
+  public void RemoveStepsFromScene() {
+    Debug.Log("RemoveStepsFromScene()");
     GameObject[] steps = GameObject.FindGameObjectsWithTag("Step");
     foreach (GameObject tooltip in steps) {
       Destroy(tooltip);
