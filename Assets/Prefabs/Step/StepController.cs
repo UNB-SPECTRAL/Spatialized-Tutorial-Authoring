@@ -19,10 +19,13 @@ public class StepController : MonoBehaviour {
   /*** Public Variables ***/
   [HideInInspector]
   public StepDetails stepDetails;
-  public bool isBeingDestroyed = false;
+  public bool isBeingDestroyed;
   
   /*** Private Variables ***/
-  private ToolTip _toolTip;
+  private ToolTip    _toolTip;
+  // For handling the Step height change.
+  private GameObject _contentParent; // The content parent game object.
+  private float      _contentParentYPosition; // Original Y position of the content parent.
 
   void Awake() {
     // Error handling in case this controller is added to a GameObject which does not have a ToolTip component.
@@ -41,6 +44,9 @@ public class StepController : MonoBehaviour {
   void Start() {
     /*** Component References ***/
     _toolTip = gameObject.GetComponent<ToolTip>();
+    _contentParent = gameObject.transform.Find("Pivot/ContentParent").gameObject;
+    _contentParentYPosition = _contentParent.transform.localPosition.y;
+    Debug.Log("ContentParentYPosition: " + _contentParentYPosition);
 
     /*** Step Configuration ***/
     // At minimum, a ToolTip will be instantiated with at least a `name` and `globalPose` property.
@@ -87,6 +93,23 @@ public class StepController : MonoBehaviour {
       SceneController.State == SceneState.CreateStep
       && deleteButton.activeSelf == false
     ) deleteButton.SetActive(true);
+    
+    /*** Update Height ***/
+    // If another StepController is playing a video, increase this Step's height
+    // so that is does not overlap the other StepController. Only do this once.
+    if (
+      (SceneController.State == SceneState.CreateStepPlaying || SceneController.State == SceneState.ViewStepPlaying)
+      && videoPlayer.isPlaying == false
+    ) {
+      if (Math.Abs(_contentParent.transform.localPosition.y - _contentParentYPosition) < 0.001f) {
+        Debug.Log(stepDetails.id + " increasing height");
+        _contentParent.transform.localPosition = new Vector3(0, 0.5f, 0);   
+      }
+    }
+    else if(Math.Abs(_contentParent.transform.localPosition.y - _contentParentYPosition) > 0.001f) {
+      Debug.Log(stepDetails.id + " decreasing height");
+      _contentParent.transform.localPosition = new Vector3(0, _contentParentYPosition, 0);
+    }
   }
   
   /** Given a url, setup the VideoPlayer with a thumbnail image. */
@@ -99,8 +122,10 @@ public class StepController : MonoBehaviour {
     videoPlayer.targetCameraAlpha = 0.8f;
 
     // BUG: Rotate the video since its playing upside down for some reason.
-    videoPlayer.transform.rotation = Quaternion.Euler(videoPlayer.transform.rotation.x, videoPlayer.transform.rotation.y, 180);
-    
+    var rotation           = videoPlayer.transform.rotation;
+    rotation                       = Quaternion.Euler(rotation.x, rotation.y, 180);
+    videoPlayer.transform.rotation = rotation;
+
     // Finally generate a thumbnail of the video after ToolTip script has completed (wait 0.2s)
     // BUG: The ToolTip prefab is somehow disabling the VideoPlayer and causing an "Cannot Prepare a disabled VideoPlayer" error.
     StartCoroutine(Utilities.WaitForSecondsAnd(0.2f, () => {
@@ -108,7 +133,7 @@ public class StepController : MonoBehaviour {
       // to pressing play) then pausing the video (which renders the first frame)
       // and then showing the videoPlayer mesh.
       // A more performant approach would be to follow the link below with
-      // updating the frame and saving this as an image to the unpreparing the
+      // updating the frame and saving this as an image to the un-preparing the
       // video afterwards. TODO: Reference HoloVision to see how they did it.
       // This code was inspired by: https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687
       // https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687/
