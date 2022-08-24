@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.WorldLocking.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Video;
 
@@ -14,7 +16,8 @@ using SceneState = SceneController.SceneState;
 public class StepController : MonoBehaviour {
   /*** Unity Editor ***/
   public VideoPlayer videoPlayer; // The video player game object.
-  public GameObject  deleteButton; // The step delete button game object.
+  public GameObject  deleteButton; // Delete button game object
+  public GameObject  title; // Title game object
   
   [Header("Background")]
   public GameObject background;       // The step background game object.
@@ -55,7 +58,7 @@ public class StepController : MonoBehaviour {
     _contentParentYPosition = _contentParent.transform.localPosition.y;
     
     /*** Background Update ***/
-    // Set the background material to the unviewed material.
+    // Set the background material to the un-viewed material.
     background.GetComponent<Renderer>().material = unviewedMaterial;
 
     /*** Step Configuration ***/
@@ -64,6 +67,7 @@ public class StepController : MonoBehaviour {
     name                 = stepDetails.id;
     _toolTip.ToolTipText = stepDetails.name;
     transform.SetGlobalPose(stepDetails.globalPose);
+    title.GetComponent<TextMeshPro>().text = stepDetails.id.Split('_').Last();
 
     // We must explicitly check if there is a `videoFilePath` in case this is a
     // new Step and the video is currently being recorded.

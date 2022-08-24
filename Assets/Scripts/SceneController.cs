@@ -302,6 +302,10 @@ public class SceneController : MonoBehaviour {
     foreach (var stepGameObject in Instance.stepGameObjects) {
       if (stepGameObject.GetComponent<StepController>().isViewed) continue;
       Instance.chevron.GetComponent<DirectionalIndicator>().DirectionalTarget = stepGameObject.transform;
+      return;
     }
+    
+    // If there are no more steps to view, remove the directional target.
+    Instance.chevron.GetComponent<DirectionalIndicator>().DirectionalTarget = null;
   }
 }
