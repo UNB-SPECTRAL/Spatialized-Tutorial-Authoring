@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -302,7 +303,11 @@ public class ActionController : MonoBehaviour {
     }
     
     // Return the sorted game objects (first element is the first step)
-    stepGameObjects.Reverse();
+    stepGameObjects.Sort((a, b) => {
+      var aId = a.GetComponent<StepController>().stepDetails.id;
+      var bId = b.GetComponent<StepController>().stepDetails.id;
+      return string.Compare(aId, bId, StringComparison.Ordinal);
+    });
     return stepGameObjects;
   }
 
