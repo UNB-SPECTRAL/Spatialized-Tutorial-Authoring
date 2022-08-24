@@ -1383,7 +1383,7 @@ MonoBehaviour:
   title: {fileID: 3105668568105359867}
   background: {fileID: 5355749801973152014}
   unviewedMaterial: {fileID: 2100000, guid: ec72a3a105768f746b556a8dfdae61a8, type: 2}
-  viewedMaterial: {fileID: 2100000, guid: 552f1a3245d3edc4a96fe296c950532a, type: 2}
+  viewedMaterial: {fileID: 2100000, guid: 68581ab65a54bad45b3d0fbfca7613fe, type: 2}
   stepDetails:
     id: 
     name: 
