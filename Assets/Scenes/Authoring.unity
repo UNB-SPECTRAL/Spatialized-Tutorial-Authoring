@@ -10398,7 +10398,7 @@ MonoBehaviour:
   MinIndicatorScale: 0.05
   MaxIndicatorScale: 0.1
   VisibilityScaleFactor: 0.75
-  ViewOffset: 0.5
+  ViewOffset: 0.3
 --- !u!114 &883101650
 MonoBehaviour:
   m_ObjectHideFlags: 0
