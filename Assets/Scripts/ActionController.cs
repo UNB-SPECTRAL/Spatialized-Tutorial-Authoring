@@ -82,8 +82,8 @@ public class ActionController : MonoBehaviour {
     _dictationHandler.OnDictationError.AddListener(OnDictationError);
   }
 
-  void Update() {
-    switch (SceneController.State) {
+  public void UpdateState(SceneState state) {
+    switch (state) {
       case SceneState.MainMenu: {
         /*** Create Step State ***/
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
@@ -105,6 +105,17 @@ public class ActionController : MonoBehaviour {
 
         break;
       }
+      case SceneState.StartStepRecording: {
+        /*** Start Step Recording State ***/
+        // TODO: Do we still want to listen to mark?
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        // Keep this active so that we can keep calling `createStep()` to update
+        // the step's location.
+        if (!_interactable.enabled) _interactable.enabled             = true;
+
+        break;
+      }
+      // TODO: Add new state
       case SceneState.CreateStepRecording: {
         /*** Create Step State ***/
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
@@ -128,7 +139,13 @@ public class ActionController : MonoBehaviour {
    * Create a new Step for a Tutorial, instantiates that Step and
    * start a recording (video, audio).
    */
-  private void CreateStep() {
+  private StepDetails CreateStep() {
+    // Only allow this function to be called when we are in the CreateStep or
+    // StartStepRecording state.
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.LogError("CreateStep() can only be called when in the CreateStep or StartStepRecording state.");
+      return null;
+    }
     Debug.Log("CreateStep()");
 
     // Get the primary pointer location
@@ -136,14 +153,24 @@ public class ActionController : MonoBehaviour {
     Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
     Pose       pose     = new Pose(position, rotation);
 
-    // Create a step in the TutorialSore
-    StepDetails stepDetails = TutorialStore.CreateStep(pose);
+    StepDetails stepDetails;
+    if (SceneController.State == SceneState.CreateStep) {
+      // Create a new step in the TutorialStore if we are in the CreateStep state.
+      stepDetails = TutorialStore.CreateStep(pose);
+      // And instantiate the step in the scene
+      InstantiateStep(stepDetails);
+    }
+    else {
+      // Otherwise, update the last step location
+      stepDetails = TutorialStore.UpdateLastStep("globalPose", pose);
+      // TODO: See if the memory reference can just update the position...
+    }
 
-    // Create the Step GameObject
-    InstantiateStep(stepDetails);
+    // Update the state to indicate that we are in the StartStepRecording state.
+    SceneController.State = SceneState.StartStepRecording;
+    Debug.Log("State: " + SceneController.State);
 
-    // Start recording
-    StartRecording(stepDetails);
+    return stepDetails;
   }
 
   /** Given StepDetails, instantiate a Step in the scene and return it's reference. */
@@ -194,14 +221,18 @@ public class ActionController : MonoBehaviour {
     if (ClickedStep() != null) return; // Don't allow if clicked on a Step.
 
     Debug.Log("VoiceCommandMark()");
-
-    CreateStep();
+    
+    // Create a new Step and start recording
+    StartRecording(CreateStep());
   }
 
   /** When "Air Click"ing */
-  public void AirClickMark() {
-    if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    
+  public void OnAirClickMark() {
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.Log("OnAirClickMark() called in incorrect state: " + SceneController.State);
+      return; // Only allow this in the CreateStep state.
+    }
+
     if (ClickedInteractable() != null) { // Pass event to interactable if exist
       Interactable clickedGoInteractable = ClickedInteractable();
       clickedGoInteractable.OnClick.Invoke();
@@ -214,7 +245,7 @@ public class ActionController : MonoBehaviour {
       return;
     }
 
-    Debug.Log("AirClickMark()");
+    Debug.Log("OnAirClickMark()");
 
     CreateStep();
   }

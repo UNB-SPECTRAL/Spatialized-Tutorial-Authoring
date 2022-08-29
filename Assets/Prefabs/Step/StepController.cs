@@ -81,7 +81,8 @@ public class StepController : MonoBehaviour {
       SceneController.Instance.OnDeleteStepButtonPress(stepDetails);
     }); // Setup the listener
   }
-
+  
+  // TODO: We should try to not use Update here to improve performance
   void Update() {
     // If the VideoPlayer GameObject is not active and there is a `videoFilePath` then show it.
     // And setup the video player
@@ -123,6 +124,13 @@ public class StepController : MonoBehaviour {
     else if(Math.Abs(_contentParent.transform.localPosition.y - _contentParentYPosition) > 0.001f) {
       Debug.Log(stepDetails.id + " decreasing height");
       _contentParent.transform.localPosition = new Vector3(0, _contentParentYPosition, 0);
+    }
+    
+    /*** Update Position ***/
+    // If the position of the Step has changes, change it
+    if (transform.GetGlobalPose() != stepDetails.globalPose) {
+      Debug.Log("Updating position of " + stepDetails.id);
+      transform.SetGlobalPose(stepDetails.globalPose);
     }
   }
   

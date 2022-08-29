@@ -88,7 +88,7 @@ public class TutorialStore {
     throw new Exception("Could not find tutorial for step " + stepId);
   }
 
-  public StepDetails UpdateLastStep(string key, string value) {
+  public StepDetails UpdateLastStep(string key, object value) {
     // Get the latest tutorial
     Tutorial latestTutorial = tutorials[tutorials.Count - 1];
 
@@ -162,19 +162,25 @@ public class TutorialStore {
       return step;
     }
 
-    public StepDetails UpdateLastStep(string key, string value) {
+    public StepDetails UpdateLastStep(string key, object value) {
       // Get the last stepDetails
       var lastStepDetails = steps[steps.Count - 1];
 
       switch (key) {
         case "videoFilePath":
-          lastStepDetails.videoFilePath = value;
+          string videoFilePath = (string) value;
+          lastStepDetails.videoFilePath = videoFilePath;
           break;
         case "transcript":
-          lastStepDetails.transcript = value;
+          string transcript = (string) value;
+          lastStepDetails.transcript = transcript;
           // When updating the transcript, also update the text so that we can
           // include 15 characters of transcript text in the UI.
-          lastStepDetails.name += ": " + value.Substring(0, (Math.Min(15, value.Length))) + "...";
+          lastStepDetails.name += ": " + transcript.Substring(0, (Math.Min(15, transcript.Length))) + "...";
+          break;
+        case "globalPose":
+          Pose globalPose = (Pose) value;
+          lastStepDetails.globalPose = globalPose;
           break;
         default:
           throw new Exception("StepDetails does not have a key named " + key + " that can be set.");

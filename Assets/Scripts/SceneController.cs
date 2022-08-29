@@ -18,6 +18,7 @@ public class SceneController : MonoBehaviour {
   [Header("Authoring Scene")]
   public GameObject createTutorialButton;
   public GameObject stepList;
+  public GameObject startStepRecordingButton;
   public GameObject stopStepRecordingButton;
 
   /*** Guidance Scene ***/
@@ -27,13 +28,15 @@ public class SceneController : MonoBehaviour {
   public GameObject chevron; // Used for indicating the next step.
 
   /***** Public Variables *****/
+  // https://mermaid.live/edit#pako:eNqNksGKwjAQhl-lDHizlz32sCC67ElYtounXIZm1ECbSjpZkdJ3d2obq7YFcwiZf74Z_kxSQ1ZqggQqRqaNwYPDIv7_UDaStUVjt2R9FMef0dqRIH-eS2cwnwB2hs4hXSnbEYtFtPJ8FNEeOuW5z0PrlOkUygblBqSMjtvol7LS6Zded2wI3-V-crzMUeFyY0991Yz3sdl3zc0VPAzz2xuNNqNOeBr5_RHakmoOGG4V8jd86gWngdHYXsQpG90eFiyhIFeg0fLx6jangI9UkIJEjpr26HNWoGwjqD9pGcOXNuILkr04oyWguEwvNoOEnacA9f-3p5or3Rj0OA
   public enum SceneState {
     /* Main Menu */
     MainMenu,
 
     /* Authoring */
-    CreateTutorial,
-    CreateStep, // When we can "Mark" a step, view a step recording or end the tutorial.
+    CreateTutorial, // MainMenu -- Click "Authoring" --> CreateTutorial
+    CreateStep,     // CreateTutorial -- Click "Start new Tutorial" --> CreateStep (Able to say "Mark" and "Tap To Place")
+    StartStepRecording, // CreateStep -- "Tap to place" --> StartRecording (Must click "Start Recording" to start recording)
     CreateStepRecording,
     CreateStepPlaying,
 
@@ -54,6 +57,7 @@ public class SceneController : MonoBehaviour {
     set {
       Instance._state = value;
       Instance.UpdateState(value);
+      ActionController.Instance.UpdateState(value);
     }
   }
 
@@ -94,6 +98,7 @@ public class SceneController : MonoBehaviour {
         
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
@@ -105,6 +110,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(true);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
  
         tutorialList.SetActive(false);
@@ -117,6 +123,19 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(true);
+        startStepRecordingButton.SetActive(false);
+        stopStepRecordingButton.SetActive(false);
+        
+        tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
+        break;
+      case SceneState.StartStepRecording: 
+        mainMenu.SetActive(false);
+        
+        createTutorialButton.SetActive(false);
+        stepList.SetActive(true);
+        startStepRecordingButton.SetActive(true);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
@@ -128,6 +147,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(true);
 
         tutorialList.SetActive(false);
@@ -140,6 +160,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(true);
@@ -153,6 +174,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
@@ -174,12 +196,6 @@ public class SceneController : MonoBehaviour {
     State = SceneState.ViewTutorials;
   }
 
-  public void OnResetButtonPress() {
-    Debug.Log("OnResetButtonPress()");
-    ActionController.Instance.ResetTutorials(); // Delete all the data
-    State = SceneState.MainMenu;
-  }
-
   /*** Authoring Scene ***/
   public void OnCreateTutorialButtonPress() {
     Debug.Log("OnCreateTutorialButtonPress()");
@@ -187,10 +203,17 @@ public class SceneController : MonoBehaviour {
     State = SceneState.CreateStep;
   }
 
+  // TODO: Figure out what this does
   public void OnStopTutorialButtonPress() {
     Debug.Log("OnStopTutorialButtonPress()");
     ActionController.Instance.RemoveStepsFromScene(); // Hide steps when returning to main menu.
     State = SceneState.MainMenu;
+  }
+
+  public void OnStartStepRecordingButtonPress() {
+    Debug.Log("OnStartStepRecordingButtonPress()");
+    // ActionController.Instance.StartRecording(); // Since we have already created the step, we just need to start recording a tutorial.
+    // TODO: Update the state if it has not.
   }
 
   public void OnStopStepRecordingButtonPress() {
