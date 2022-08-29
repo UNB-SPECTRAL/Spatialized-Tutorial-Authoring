@@ -221,13 +221,20 @@ public class SceneController : MonoBehaviour {
 
   public void OnStopStepRecordingButtonPress() {
     Debug.Log("OnStopStepRecordingButtonPress()");
+    
     ActionController.Instance.EndMarking(); // End recording
+    stepList.GetComponent<StepListController>().OnEnable(); // Update the step list.
+    
     State = SceneState.CreateStep;
   }
 
   public void OnDeleteStepButtonPress(StepDetails stepDetails) {
     Debug.Log("OnDeleteStepButtonPress()");
+    
+    ActionController.Instance.DeleteStepWithNoVideo(); // Delete the "Air Clicked" step
     ActionController.Instance.DeleteStep(stepDetails); // Delete a step
+    stepList.GetComponent<StepListController>().OnEnable(); // Update the step list.
+    
     State = SceneState.CreateStep;
   }
   

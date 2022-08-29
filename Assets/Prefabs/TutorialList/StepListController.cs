@@ -17,10 +17,10 @@ public class StepListController : MonoBehaviour {
       SceneController.Instance.OnStopTutorialButtonPress();
     });
   }
-  
+
   // Each time we enable this component, we need to rebuild the list of 
   // steps in case some were deleted.
-  void OnEnable() {
+  public void OnEnable() {
     Debug.Log("StepListController.OnEnable()");
     // Delete all the children of the grid object collection.
     foreach (Transform child in gridObjectCollection.transform) {
@@ -46,8 +46,6 @@ public class StepListController : MonoBehaviour {
       // Update the delete button
       tutorialListButtonController.deleteTutorialButtonConfigHelper.OnClick.AddListener(() => {
         SceneController.Instance.OnDeleteStepButtonPress(step);
-        // Call the OnEnable method again to rebuild the list.
-        OnEnable();
       }); ;
     }
     

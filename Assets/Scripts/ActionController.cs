@@ -200,6 +200,7 @@ public class ActionController : MonoBehaviour {
     
     // Get the last step to associate the recording to.
     StepDetails lastStep = TutorialStore.LastStep();
+    if (lastStep == null) throw new Exception("StartRecording: ERROR Cannot find last step");
 
     // Start video recording (pass along the video file name)
     Debug.Log("Video Recording: Starting");
@@ -288,14 +289,12 @@ public class ActionController : MonoBehaviour {
     Debug.Log("DeleteStepWithNoVideo");
 
     // Get the last step of the latest tutorial.
-    StepDetails lastStep = TutorialStore.LastStep();
+    var lastStep = TutorialStore.LastStep();
     
-    // If there is no video associated with the step, delete the step.
-    if (lastStep.videoFilePath == null) {
+    // Delete the step if there is one and the last step does not have any `videoFilePath`
+    if (lastStep != null && string.IsNullOrEmpty(lastStep.videoFilePath)) {
       TutorialStore.DeleteStep(lastStep.id);
     }
-    
-    // Otherwise, do nothing.
   }
 
   /**
@@ -316,17 +315,12 @@ public class ActionController : MonoBehaviour {
     }
 
     Debug.Log("DeleteStep(Step " + stepDetails.id + ")");
+    
+    // Find the tutorial which contains the step.
+    Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
 
     // Remove all steps shown in the Unity scene
-    Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
-    foreach (var step in tutorial.steps) {
-      GameObject stepToDestroy = GameObject.Find(step.id);
-      if (stepToDestroy != null) {
-        StepController stepToDestroyStepController = stepToDestroy.GetComponent<StepController>();
-        stepToDestroyStepController.isBeingDestroyed = true; // So that we can know that it will be destroyed within the game loop.
-        Destroy(stepToDestroy);
-      }
-    }
+    RemoveStepsFromScene();
 
     // Delete step from TutorialStore
     TutorialStore.DeleteStep(stepDetails.id);
@@ -377,8 +371,10 @@ public class ActionController : MonoBehaviour {
   public void RemoveStepsFromScene() {
     Debug.Log("RemoveStepsFromScene()");
     GameObject[] steps = GameObject.FindGameObjectsWithTag("Step");
-    foreach (GameObject tooltip in steps) {
-      Destroy(tooltip);
+    foreach (GameObject step in steps) {
+      StepController stepToDestroyStepController = step.GetComponent<StepController>();
+      stepToDestroyStepController.isBeingDestroyed = true; // So that we can know that it will be destroyed within the game loop.
+      Destroy(step);
     }
   }
 
@@ -411,7 +407,8 @@ public class ActionController : MonoBehaviour {
     // We found that "End Marking" is sometimes transcribed as "And Marking"
     // so we are just now looking for the keyword "Marking" instead.
     if (transcript.ToLower().Contains("marking")) {
-      EndMarking();
+      // Calling the SceneController since we have some UI updates to perform.
+      SceneController.Instance.OnStopStepRecordingButtonPress();
     }
   }
 

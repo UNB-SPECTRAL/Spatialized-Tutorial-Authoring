@@ -94,7 +94,9 @@ public class TutorialStore {
 
   public StepDetails LastStep() {
     Tutorial lastTutorial = LastTutorial();
-    return lastTutorial.steps[lastTutorial.steps.Count - 1];
+    
+    int lastStepIndex = lastTutorial.steps.Count - 1;
+    return lastStepIndex < 0 ? null : lastTutorial.steps[lastStepIndex];
   }
 
   public StepDetails UpdateLastStep(string key, object value) {
@@ -227,21 +229,26 @@ public class TutorialStore {
         // Update the step id
         steps[i].id = expectedStepId;
         // Update the step name
-        steps[i].name = "Step " + (i + 1) + ":" + steps[i].name.Split(':')[1];
+        steps[i].name = "" + (i + 1);
+        if (String.IsNullOrEmpty(steps[i].transcript) != true) {
+          steps[i].name += ": " + steps[i].transcript.Substring(0, (Math.Min(15, steps[i].transcript.Length))) + "...";  
+        }
         // Update the video file path
-        string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
-        File.Move(
-          Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
-          newVideoFilePath
-        ); // Rename the video file
-        steps[i].videoFilePath = newVideoFilePath;
+        if (String.IsNullOrEmpty(steps[i].videoFilePath) != true) {
+          string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
+          File.Move(
+            Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
+            newVideoFilePath
+          ); // Rename the video file
+          steps[i].videoFilePath = newVideoFilePath;
+        }
       }
     }
 
     [Serializable]
     public class StepDetails {
       public string id; // e.g. "tutorial_1_step_1"
-      public string name; // e.g. "Step 1: something..." 
+      public string name; // e.g. "1: something..." 
       public Pose   globalPose;
       public string videoFilePath;
       public string transcript;
