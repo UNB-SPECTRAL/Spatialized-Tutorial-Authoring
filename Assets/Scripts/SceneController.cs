@@ -203,17 +203,20 @@ public class SceneController : MonoBehaviour {
     State = SceneState.CreateStep;
   }
 
-  // TODO: Figure out what this does
+  /** Used by the StepList to complete a tutorial authoring */
   public void OnStopTutorialButtonPress() {
     Debug.Log("OnStopTutorialButtonPress()");
-    ActionController.Instance.RemoveStepsFromScene(); // Hide steps when returning to main menu.
+    // Delete the the last step if it does not have a video since it could have
+    // been "tap to place" but not recorded.
+    ActionController.Instance.DeleteStepWithNoVideo();
+    // Hide steps when returning to main menu.
+    ActionController.Instance.RemoveStepsFromScene(); 
     State = SceneState.MainMenu;
   }
-
+  
   public void OnStartStepRecordingButtonPress() {
     Debug.Log("OnStartStepRecordingButtonPress()");
-    // ActionController.Instance.StartRecording(); // Since we have already created the step, we just need to start recording a tutorial.
-    // TODO: Update the state if it has not.
+    ActionController.Instance.StartRecording();
   }
 
   public void OnStopStepRecordingButtonPress() {

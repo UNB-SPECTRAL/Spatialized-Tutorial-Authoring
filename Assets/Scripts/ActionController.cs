@@ -139,12 +139,12 @@ public class ActionController : MonoBehaviour {
    * Create a new Step for a Tutorial, instantiates that Step and
    * start a recording (video, audio).
    */
-  private StepDetails CreateStep() {
+  private void CreateStep() {
     // Only allow this function to be called when we are in the CreateStep or
     // StartStepRecording state.
     if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
       Debug.LogError("CreateStep() can only be called when in the CreateStep or StartStepRecording state.");
-      return null;
+      return;
     }
     Debug.Log("CreateStep()");
 
@@ -169,8 +169,6 @@ public class ActionController : MonoBehaviour {
     // Update the state to indicate that we are in the StartStepRecording state.
     SceneController.State = SceneState.StartStepRecording;
     Debug.Log("State: " + SceneController.State);
-
-    return stepDetails;
   }
 
   /** Given StepDetails, instantiate a Step in the scene and return it's reference. */
@@ -196,13 +194,16 @@ public class ActionController : MonoBehaviour {
    * - Starting a video (camera/microphone) recording
    * - Starting a speech to text (via Unity Dictation) recording
    */
-  private void StartRecording(StepDetails stepDetails) {
+  public void StartRecording() {
     // When recording, change the state
     SceneController.State = SceneState.CreateStepRecording;
+    
+    // Get the last step to associate the recording to.
+    StepDetails lastStep = TutorialStore.LastStep();
 
     // Start video recording (pass along the video file name)
     Debug.Log("Video Recording: Starting");
-    CameraProvider.StartRecording(stepDetails.id);
+    CameraProvider.StartRecording(lastStep.id);
 
     // Start speech-to-text recording
     // TODO: We should use the Unity Dictation API since we can dispose and release the resources.
@@ -223,7 +224,8 @@ public class ActionController : MonoBehaviour {
     Debug.Log("VoiceCommandMark()");
     
     // Create a new Step and start recording
-    StartRecording(CreateStep());
+    CreateStep();
+    StartRecording();
   }
 
   /** When "Air Click"ing */
@@ -269,6 +271,32 @@ public class ActionController : MonoBehaviour {
     // Once the recording has been stopped, change the state to `CreateStep`
     SceneController.State = SceneState.CreateStep;
   }
+  
+  /**
+   * Deletes the last step from the TutorialStore if there is no video associated
+   * with it.
+   *
+   * This is only used when ending a tutorial through the Authoring flow where
+   * a step could be placed but not recorded.
+   */
+  public void DeleteStepWithNoVideo() {
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.LogError("DeleteStepWithNoVideo(): ERROR - Not in correct state: " + SceneController.State);
+      return;
+    }
+    
+    Debug.Log("DeleteStepWithNoVideo");
+
+    // Get the last step of the latest tutorial.
+    StepDetails lastStep = TutorialStore.LastStep();
+    
+    // If there is no video associated with the step, delete the step.
+    if (lastStep.videoFilePath == null) {
+      TutorialStore.DeleteStep(lastStep.id);
+    }
+    
+    // Otherwise, do nothing.
+  }
 
   /**
    * Delete a Step from the Unity Scene and the TutorialStore.
@@ -277,11 +305,14 @@ public class ActionController : MonoBehaviour {
    * - ID
    * - Name
    * - VideoFilePath
+   *
+   * TODO: Test this method
    */
   public void DeleteStep(StepDetails stepDetails) {
     // Validate that we are in the right state to delete a step
-    if (SceneController.State != SceneState.CreateStep) {
-      Debug.LogError("DeleteStep(): ERROR - Not in \"Create Step\" state");
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.LogError("DeleteStep(): ERROR - Not in correct state: " + SceneController.State);
+      return;
     }
 
     Debug.Log("DeleteStep(Step " + stepDetails.id + ")");

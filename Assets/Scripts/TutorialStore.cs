@@ -87,10 +87,19 @@ public class TutorialStore {
 
     throw new Exception("Could not find tutorial for step " + stepId);
   }
+  
+  public Tutorial LastTutorial() {
+    return tutorials[tutorials.Count - 1];
+  }
+
+  public StepDetails LastStep() {
+    Tutorial lastTutorial = LastTutorial();
+    return lastTutorial.steps[lastTutorial.steps.Count - 1];
+  }
 
   public StepDetails UpdateLastStep(string key, object value) {
     // Get the latest tutorial
-    Tutorial latestTutorial = tutorials[tutorials.Count - 1];
+    Tutorial latestTutorial = LastTutorial();
 
     // Update the last step in the latest tutorial
     StepDetails latestStepDetails = latestTutorial.UpdateLastStep(key, value);
