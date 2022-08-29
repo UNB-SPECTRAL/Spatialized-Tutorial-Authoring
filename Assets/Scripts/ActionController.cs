@@ -421,6 +421,11 @@ public class ActionController : MonoBehaviour {
 
     // Associate this transcript to the latest ToolTip
     SceneController.TutorialStore.UpdateLastStep("transcript", transcript);
+    
+    // Update the UI to reflect the new transcript
+    // TODO: This should be done in the SceneController and handle more nicely
+    // when the tutorial store changes.
+    SceneController.Instance.stepList.GetComponent<StepListController>().OnEnable();
   }
 
   private void OnDictationError(string error) {
