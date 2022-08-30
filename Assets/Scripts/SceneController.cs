@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
-using Microsoft.MixedReality.WorldLocking.Core;
-using UnityEditor.SearchService;
 using UnityEngine;
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
