@@ -82,8 +82,8 @@ public class ActionController : MonoBehaviour {
     _dictationHandler.OnDictationError.AddListener(OnDictationError);
   }
 
-  void Update() {
-    switch (SceneController.State) {
+  public void UpdateState(SceneState state) {
+    switch (state) {
       case SceneState.MainMenu: {
         /*** Create Step State ***/
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
@@ -105,6 +105,17 @@ public class ActionController : MonoBehaviour {
 
         break;
       }
+      case SceneState.StartStepRecording: {
+        /*** Start Step Recording State ***/
+        // TODO: Do we still want to listen to mark?
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        // Keep this active so that we can keep calling `createStep()` to update
+        // the step's location.
+        if (!_interactable.enabled) _interactable.enabled             = true;
+
+        break;
+      }
+      // TODO: Add new state
       case SceneState.CreateStepRecording: {
         /*** Create Step State ***/
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
@@ -129,6 +140,12 @@ public class ActionController : MonoBehaviour {
    * start a recording (video, audio).
    */
   private void CreateStep() {
+    // Only allow this function to be called when we are in the CreateStep or
+    // StartStepRecording state.
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.LogError("CreateStep() can only be called when in the CreateStep or StartStepRecording state.");
+      return;
+    }
     Debug.Log("CreateStep()");
 
     // Get the primary pointer location
@@ -136,14 +153,22 @@ public class ActionController : MonoBehaviour {
     Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
     Pose       pose     = new Pose(position, rotation);
 
-    // Create a step in the TutorialSore
-    StepDetails stepDetails = TutorialStore.CreateStep(pose);
+    StepDetails stepDetails;
+    if (SceneController.State == SceneState.CreateStep) {
+      // Create a new step in the TutorialStore if we are in the CreateStep state.
+      stepDetails = TutorialStore.CreateStep(pose);
+      // And instantiate the step in the scene
+      InstantiateStep(stepDetails);
+    }
+    else {
+      // Otherwise, update the last step location
+      stepDetails = TutorialStore.UpdateLastStep("globalPose", pose);
+      // TODO: See if the memory reference can just update the position...
+    }
 
-    // Create the Step GameObject
-    InstantiateStep(stepDetails);
-
-    // Start recording
-    StartRecording(stepDetails);
+    // Update the state to indicate that we are in the StartStepRecording state.
+    SceneController.State = SceneState.StartStepRecording;
+    Debug.Log("State: " + SceneController.State);
   }
 
   /** Given StepDetails, instantiate a Step in the scene and return it's reference. */
@@ -169,13 +194,17 @@ public class ActionController : MonoBehaviour {
    * - Starting a video (camera/microphone) recording
    * - Starting a speech to text (via Unity Dictation) recording
    */
-  private void StartRecording(StepDetails stepDetails) {
+  public void StartRecording() {
     // When recording, change the state
     SceneController.State = SceneState.CreateStepRecording;
+    
+    // Get the last step to associate the recording to.
+    StepDetails lastStep = TutorialStore.LastStep();
+    if (lastStep == null) throw new Exception("StartRecording: ERROR Cannot find last step");
 
     // Start video recording (pass along the video file name)
     Debug.Log("Video Recording: Starting");
-    CameraProvider.StartRecording(stepDetails.id);
+    CameraProvider.StartRecording(lastStep.id);
 
     // Start speech-to-text recording
     // TODO: We should use the Unity Dictation API since we can dispose and release the resources.
@@ -194,14 +223,19 @@ public class ActionController : MonoBehaviour {
     if (ClickedStep() != null) return; // Don't allow if clicked on a Step.
 
     Debug.Log("VoiceCommandMark()");
-
+    
+    // Create a new Step and start recording
     CreateStep();
+    StartRecording();
   }
 
   /** When "Air Click"ing */
-  public void AirClickMark() {
-    if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
-    
+  public void OnAirClickMark() {
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.Log("OnAirClickMark() called in incorrect state: " + SceneController.State);
+      return; // Only allow this in the CreateStep state.
+    }
+
     if (ClickedInteractable() != null) { // Pass event to interactable if exist
       Interactable clickedGoInteractable = ClickedInteractable();
       clickedGoInteractable.OnClick.Invoke();
@@ -214,7 +248,7 @@ public class ActionController : MonoBehaviour {
       return;
     }
 
-    Debug.Log("AirClickMark()");
+    Debug.Log("OnAirClickMark()");
 
     CreateStep();
   }
@@ -238,6 +272,36 @@ public class ActionController : MonoBehaviour {
     // Once the recording has been stopped, change the state to `CreateStep`
     SceneController.State = SceneState.CreateStep;
   }
+  
+  /**
+   * Deletes the last step from the TutorialStore if there is no video associated
+   * with it.
+   *
+   * This is only used when ending a tutorial through the Authoring flow where
+   * a step could be placed but not recorded.
+   */
+  public void DeleteStepWithNoVideo() {
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.LogError("DeleteStepWithNoVideo(): ERROR - Not in correct state: " + SceneController.State);
+      return;
+    }
+
+    // Get the last step of the latest tutorial.
+    var lastStep = TutorialStore.LastStep();
+    
+    // Delete the step if there is one and the last step does not have any `videoFilePath`
+    if (lastStep != null && string.IsNullOrEmpty(lastStep.videoFilePath)) {
+      Debug.Log("DeleteStepWithNoVideo(" + lastStep.id + ")");
+      
+      // Delete the step from the TutorialStore
+      TutorialStore.DeleteStep(lastStep.id);
+      
+      // Delete the step from the scene
+      GameObject stepGo = GameObject.Find(lastStep.id);
+      stepGo.GetComponent<StepController>().isBeingDestroyed = true;
+      Destroy(stepGo);
+    }
+  }
 
   /**
    * Delete a Step from the Unity Scene and the TutorialStore.
@@ -246,25 +310,23 @@ public class ActionController : MonoBehaviour {
    * - ID
    * - Name
    * - VideoFilePath
+   *
+   * TODO: Test this method
    */
   public void DeleteStep(StepDetails stepDetails) {
     // Validate that we are in the right state to delete a step
-    if (SceneController.State != SceneState.CreateStep) {
-      Debug.LogError("DeleteStep(): ERROR - Not in \"Create Step\" state");
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+      Debug.LogError("DeleteStep(): ERROR - Not in correct state: " + SceneController.State);
+      return;
     }
 
     Debug.Log("DeleteStep(Step " + stepDetails.id + ")");
+    
+    // Find the tutorial which contains the step.
+    Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
 
     // Remove all steps shown in the Unity scene
-    Tutorial tutorial = TutorialStore.FindTutorialForStep(stepDetails.id);
-    foreach (var step in tutorial.steps) {
-      GameObject stepToDestroy = GameObject.Find(step.id);
-      if (stepToDestroy != null) {
-        StepController stepToDestroyStepController = stepToDestroy.GetComponent<StepController>();
-        stepToDestroyStepController.isBeingDestroyed = true; // So that we can know that it will be destroyed within the game loop.
-        Destroy(stepToDestroy);
-      }
-    }
+    RemoveStepsFromScene();
 
     // Delete step from TutorialStore
     TutorialStore.DeleteStep(stepDetails.id);
@@ -315,8 +377,10 @@ public class ActionController : MonoBehaviour {
   public void RemoveStepsFromScene() {
     Debug.Log("RemoveStepsFromScene()");
     GameObject[] steps = GameObject.FindGameObjectsWithTag("Step");
-    foreach (GameObject tooltip in steps) {
-      Destroy(tooltip);
+    foreach (GameObject step in steps) {
+      StepController stepToDestroyStepController = step.GetComponent<StepController>();
+      stepToDestroyStepController.isBeingDestroyed = true; // So that we can know that it will be destroyed within the game loop.
+      Destroy(step);
     }
   }
 
@@ -349,7 +413,8 @@ public class ActionController : MonoBehaviour {
     // We found that "End Marking" is sometimes transcribed as "And Marking"
     // so we are just now looking for the keyword "Marking" instead.
     if (transcript.ToLower().Contains("marking")) {
-      EndMarking();
+      // Calling the SceneController since we have some UI updates to perform.
+      SceneController.Instance.OnStopStepRecordingButtonPress();
     }
   }
 
@@ -362,6 +427,11 @@ public class ActionController : MonoBehaviour {
 
     // Associate this transcript to the latest ToolTip
     SceneController.TutorialStore.UpdateLastStep("transcript", transcript);
+    
+    // Update the UI to reflect the new transcript
+    // TODO: This should be done in the SceneController and handle more nicely
+    // when the tutorial store changes.
+    SceneController.Instance.stepList.GetComponent<StepListController>().OnEnable();
   }
 
   private void OnDictationError(string error) {

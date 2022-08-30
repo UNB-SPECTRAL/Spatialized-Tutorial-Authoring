@@ -87,10 +87,21 @@ public class TutorialStore {
 
     throw new Exception("Could not find tutorial for step " + stepId);
   }
+  
+  public Tutorial LastTutorial() {
+    return tutorials[tutorials.Count - 1];
+  }
 
-  public StepDetails UpdateLastStep(string key, string value) {
+  public StepDetails LastStep() {
+    Tutorial lastTutorial = LastTutorial();
+    
+    int lastStepIndex = lastTutorial.steps.Count - 1;
+    return lastStepIndex < 0 ? null : lastTutorial.steps[lastStepIndex];
+  }
+
+  public StepDetails UpdateLastStep(string key, object value) {
     // Get the latest tutorial
-    Tutorial latestTutorial = tutorials[tutorials.Count - 1];
+    Tutorial latestTutorial = LastTutorial();
 
     // Update the last step in the latest tutorial
     StepDetails latestStepDetails = latestTutorial.UpdateLastStep(key, value);
@@ -162,19 +173,25 @@ public class TutorialStore {
       return step;
     }
 
-    public StepDetails UpdateLastStep(string key, string value) {
+    public StepDetails UpdateLastStep(string key, object value) {
       // Get the last stepDetails
       var lastStepDetails = steps[steps.Count - 1];
 
       switch (key) {
         case "videoFilePath":
-          lastStepDetails.videoFilePath = value;
+          string videoFilePath = (string) value;
+          lastStepDetails.videoFilePath = videoFilePath;
           break;
         case "transcript":
-          lastStepDetails.transcript = value;
+          string transcript = (string) value;
+          lastStepDetails.transcript = transcript;
           // When updating the transcript, also update the text so that we can
           // include 15 characters of transcript text in the UI.
-          lastStepDetails.name += ": " + value.Substring(0, (Math.Min(15, value.Length))) + "...";
+          lastStepDetails.name += ": " + transcript.Substring(0, (Math.Min(15, transcript.Length))) + "...";
+          break;
+        case "globalPose":
+          Pose globalPose = (Pose) value;
+          lastStepDetails.globalPose = globalPose;
           break;
         default:
           throw new Exception("StepDetails does not have a key named " + key + " that can be set.");
@@ -212,21 +229,26 @@ public class TutorialStore {
         // Update the step id
         steps[i].id = expectedStepId;
         // Update the step name
-        steps[i].name = "Step " + (i + 1) + ":" + steps[i].name.Split(':')[1];
+        steps[i].name = "" + (i + 1);
+        if (String.IsNullOrEmpty(steps[i].transcript) != true) {
+          steps[i].name += ": " + steps[i].transcript.Substring(0, (Math.Min(15, steps[i].transcript.Length))) + "...";  
+        }
         // Update the video file path
-        string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
-        File.Move(
-          Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
-          newVideoFilePath
-        ); // Rename the video file
-        steps[i].videoFilePath = newVideoFilePath;
+        if (String.IsNullOrEmpty(steps[i].videoFilePath) != true) {
+          string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
+          File.Move(
+            Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
+            newVideoFilePath
+          ); // Rename the video file
+          steps[i].videoFilePath = newVideoFilePath;
+        }
       }
     }
 
     [Serializable]
     public class StepDetails {
       public string id; // e.g. "tutorial_1_step_1"
-      public string name; // e.g. "Step 1: something..." 
+      public string name; // e.g. "1: something..." 
       public Pose   globalPose;
       public string videoFilePath;
       public string transcript;

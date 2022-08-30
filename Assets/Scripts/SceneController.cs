@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
-using Microsoft.MixedReality.WorldLocking.Core;
 using UnityEngine;
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
@@ -18,6 +17,7 @@ public class SceneController : MonoBehaviour {
   [Header("Authoring Scene")]
   public GameObject createTutorialButton;
   public GameObject stepList;
+  public GameObject startStepRecordingButton;
   public GameObject stopStepRecordingButton;
 
   /*** Guidance Scene ***/
@@ -27,13 +27,15 @@ public class SceneController : MonoBehaviour {
   public GameObject chevron; // Used for indicating the next step.
 
   /***** Public Variables *****/
+  // https://mermaid.live/edit#pako:eNqNksGKwjAQhl-lDHizlz32sCC67ElYtounXIZm1ECbSjpZkdJ3d2obq7YFcwiZf74Z_kxSQ1ZqggQqRqaNwYPDIv7_UDaStUVjt2R9FMef0dqRIH-eS2cwnwB2hs4hXSnbEYtFtPJ8FNEeOuW5z0PrlOkUygblBqSMjtvol7LS6Zded2wI3-V-crzMUeFyY0991Yz3sdl3zc0VPAzz2xuNNqNOeBr5_RHakmoOGG4V8jd86gWngdHYXsQpG90eFiyhIFeg0fLx6jangI9UkIJEjpr26HNWoGwjqD9pGcOXNuILkr04oyWguEwvNoOEnacA9f-3p5or3Rj0OA
   public enum SceneState {
     /* Main Menu */
     MainMenu,
 
     /* Authoring */
-    CreateTutorial,
-    CreateStep, // When we can "Mark" a step, view a step recording or end the tutorial.
+    CreateTutorial, // MainMenu -- Click "Authoring" --> CreateTutorial
+    CreateStep,     // CreateTutorial -- Click "Start new Tutorial" --> CreateStep (Able to say "Mark" and "Tap To Place")
+    StartStepRecording, // CreateStep -- "Tap to place" --> StartRecording (Must click "Start Recording" to start recording)
     CreateStepRecording,
     CreateStepPlaying,
 
@@ -54,6 +56,7 @@ public class SceneController : MonoBehaviour {
     set {
       Instance._state = value;
       Instance.UpdateState(value);
+      ActionController.Instance.UpdateState(value);
     }
   }
 
@@ -94,6 +97,7 @@ public class SceneController : MonoBehaviour {
         
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
@@ -105,6 +109,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(true);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
  
         tutorialList.SetActive(false);
@@ -117,6 +122,19 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(true);
+        startStepRecordingButton.SetActive(false);
+        stopStepRecordingButton.SetActive(false);
+        
+        tutorialList.SetActive(false);
+        tutorialListBackButton.SetActive(false);
+        chevron.SetActive(false);
+        break;
+      case SceneState.StartStepRecording: 
+        mainMenu.SetActive(false);
+        
+        createTutorialButton.SetActive(false);
+        stepList.SetActive(true);
+        startStepRecordingButton.SetActive(true);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
@@ -128,6 +146,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(true);
 
         tutorialList.SetActive(false);
@@ -140,6 +159,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(true);
@@ -153,6 +173,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
+        startStepRecordingButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
@@ -174,12 +195,6 @@ public class SceneController : MonoBehaviour {
     State = SceneState.ViewTutorials;
   }
 
-  public void OnResetButtonPress() {
-    Debug.Log("OnResetButtonPress()");
-    ActionController.Instance.ResetTutorials(); // Delete all the data
-    State = SceneState.MainMenu;
-  }
-
   /*** Authoring Scene ***/
   public void OnCreateTutorialButtonPress() {
     Debug.Log("OnCreateTutorialButtonPress()");
@@ -187,21 +202,49 @@ public class SceneController : MonoBehaviour {
     State = SceneState.CreateStep;
   }
 
+  /** Used by the StepList to complete a tutorial authoring */
   public void OnStopTutorialButtonPress() {
     Debug.Log("OnStopTutorialButtonPress()");
-    ActionController.Instance.RemoveStepsFromScene(); // Hide steps when returning to main menu.
+    // Delete the the last step if it does not have a video since it could have
+    // been "tap to place" but not recorded.
+    ActionController.Instance.DeleteStepWithNoVideo();
+    // Hide steps when returning to main menu.
+    ActionController.Instance.RemoveStepsFromScene(); 
     State = SceneState.MainMenu;
+  }
+  
+  public void OnStartStepRecordingButtonPress() {
+    Debug.Log("OnStartStepRecordingButtonPress()");
+    
+    // Stop all video players before starting a new step recording since this
+    // can cause issues with the recording.
+    if (Instance._activeStepController != null) {
+      Debug.Log("Video player is playing. Stopping video player.");
+      // Pause the video (it could already be paused)
+      // Not calling PauseOrStopVideo() because we don't want to update the
+      // scene state and then update it back.
+      Instance._activeStepController.videoPlayer.Pause();
+    }
+    
+    ActionController.Instance.StartRecording();
   }
 
   public void OnStopStepRecordingButtonPress() {
     Debug.Log("OnStopStepRecordingButtonPress()");
+    
     ActionController.Instance.EndMarking(); // End recording
+    stepList.GetComponent<StepListController>().OnEnable(); // Update the step list.
+    
     State = SceneState.CreateStep;
   }
 
   public void OnDeleteStepButtonPress(StepDetails stepDetails) {
     Debug.Log("OnDeleteStepButtonPress()");
+    
+    ActionController.Instance.DeleteStepWithNoVideo(); // Delete the "Air Clicked" step
     ActionController.Instance.DeleteStep(stepDetails); // Delete a step
+    stepList.GetComponent<StepListController>().OnEnable(); // Update the step list.
+    
     State = SceneState.CreateStep;
   }
   
@@ -234,12 +277,14 @@ public class SceneController : MonoBehaviour {
    * A step can only be clicked in the following cases:
    * - In the "Create Step" state.
    * - In the "Create Step Playing" state.
+   * - In the "StartStepRecordinc" state.
    * - In the "View Steps" state (since we can view a step recording).
    * - In the "View Step Playing" state.
    */
   public static bool CanClickStep() {
     return State == SceneState.CreateStep
            || State == SceneState.CreateStepPlaying
+           || State == SceneState.StartStepRecording
            || State == SceneState.ViewSteps
            || State == SceneState.ViewStepPlaying;
   }
@@ -256,6 +301,9 @@ public class SceneController : MonoBehaviour {
     // Update the Chevron to point to the next step
     UpdateChevron();
     
+    // Delete all partial markings
+    ActionController.Instance.DeleteStepWithNoVideo();
+    
     // Check if there is an existing stepController that is/was playing a video.
     if (Instance._activeStepController != null) {
       // Pause the video (it could already be paused)
@@ -269,7 +317,7 @@ public class SceneController : MonoBehaviour {
 
     // Update the state if needed (since we could be pausing an active video and
     // would already be in these states).
-    if (State == SceneState.CreateStep) State     = SceneState.CreateStepPlaying;
+    if (State == SceneState.CreateStep || State == SceneState.StartStepRecording) State     = SceneState.CreateStepPlaying;
     else if (State == SceneState.ViewSteps) State = SceneState.ViewStepPlaying;
   }
 
