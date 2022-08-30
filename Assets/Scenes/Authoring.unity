@@ -11291,7 +11291,7 @@ MonoBehaviour:
   maintainScaleOnInitialization: 1
   smoothing: 1
   lifetime: 0
-  referenceDirection: 0
+  referenceDirection: 1
   minDistance: 0.3
   maxDistance: 0.7
   minViewDegrees: 0
@@ -17496,7 +17496,7 @@ MonoBehaviour:
   maintainScaleOnInitialization: 1
   smoothing: 1
   lifetime: 0
-  referenceDirection: 0
+  referenceDirection: 1
   minDistance: 0.3
   maxDistance: 0.7
   minViewDegrees: 0
@@ -19718,7 +19718,7 @@ MonoBehaviour:
   maintainScaleOnInitialization: 1
   smoothing: 1
   lifetime: 0
-  referenceDirection: 0
+  referenceDirection: 1
   minDistance: 0.3
   maxDistance: 0.7
   minViewDegrees: 0
@@ -21975,9 +21975,9 @@ MonoBehaviour:
   maintainScaleOnInitialization: 1
   smoothing: 1
   lifetime: 0
-  referenceDirection: 0
+  referenceDirection: 1
   minDistance: 0.3
-  maxDistance: 0.7
+  maxDistance: 0.3
   minViewDegrees: 0
   maxViewDegrees: 20
   aspectV: 1
@@ -22507,7 +22507,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1997802930
 Transform:
   m_ObjectHideFlags: 0
@@ -22662,7 +22662,7 @@ MonoBehaviour:
   maintainScaleOnInitialization: 1
   smoothing: 1
   lifetime: 0
-  referenceDirection: 0
+  referenceDirection: 1
   minDistance: 0.3
   maxDistance: 0.7
   minViewDegrees: 0
@@ -26633,9 +26633,9 @@ MonoBehaviour:
   smoothing: 1
   lifetime: 0
   referenceDirection: 1
-  minDistance: 0.3
+  minDistance: 0.35
   maxDistance: 0.7
-  minViewDegrees: 20
+  minViewDegrees: 0
   maxViewDegrees: 50
   aspectV: 1
   ignoreAngleClamp: 0

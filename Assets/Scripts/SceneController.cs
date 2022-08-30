@@ -3,6 +3,7 @@ using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities.Solvers;
 using Microsoft.MixedReality.WorldLocking.Core;
+using UnityEditor.SearchService;
 using UnityEngine;
 using Tutorial = TutorialStore.Tutorial;
 using StepDetails = TutorialStore.Tutorial.StepDetails;
@@ -216,6 +217,17 @@ public class SceneController : MonoBehaviour {
   
   public void OnStartStepRecordingButtonPress() {
     Debug.Log("OnStartStepRecordingButtonPress()");
+    
+    // Stop all video players before starting a new step recording since this
+    // can cause issues with the recording.
+    if (Instance._activeStepController != null) {
+      Debug.Log("Video player is playing. Stopping video player.");
+      // Pause the video (it could already be paused)
+      // Not calling PauseOrStopVideo() because we don't want to update the
+      // scene state and then update it back.
+      Instance._activeStepController.videoPlayer.Pause();
+    }
+    
     ActionController.Instance.StartRecording();
   }
 
@@ -267,12 +279,14 @@ public class SceneController : MonoBehaviour {
    * A step can only be clicked in the following cases:
    * - In the "Create Step" state.
    * - In the "Create Step Playing" state.
+   * - In the "StartStepRecordinc" state.
    * - In the "View Steps" state (since we can view a step recording).
    * - In the "View Step Playing" state.
    */
   public static bool CanClickStep() {
     return State == SceneState.CreateStep
            || State == SceneState.CreateStepPlaying
+           || State == SceneState.StartStepRecording
            || State == SceneState.ViewSteps
            || State == SceneState.ViewStepPlaying;
   }
@@ -289,6 +303,9 @@ public class SceneController : MonoBehaviour {
     // Update the Chevron to point to the next step
     UpdateChevron();
     
+    // Delete all partial markings
+    ActionController.Instance.DeleteStepWithNoVideo();
+    
     // Check if there is an existing stepController that is/was playing a video.
     if (Instance._activeStepController != null) {
       // Pause the video (it could already be paused)
@@ -302,7 +319,7 @@ public class SceneController : MonoBehaviour {
 
     // Update the state if needed (since we could be pausing an active video and
     // would already be in these states).
-    if (State == SceneState.CreateStep) State     = SceneState.CreateStepPlaying;
+    if (State == SceneState.CreateStep || State == SceneState.StartStepRecording) State     = SceneState.CreateStepPlaying;
     else if (State == SceneState.ViewSteps) State = SceneState.ViewStepPlaying;
   }
 

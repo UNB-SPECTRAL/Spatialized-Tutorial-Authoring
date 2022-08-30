@@ -285,15 +285,21 @@ public class ActionController : MonoBehaviour {
       Debug.LogError("DeleteStepWithNoVideo(): ERROR - Not in correct state: " + SceneController.State);
       return;
     }
-    
-    Debug.Log("DeleteStepWithNoVideo");
 
     // Get the last step of the latest tutorial.
     var lastStep = TutorialStore.LastStep();
     
     // Delete the step if there is one and the last step does not have any `videoFilePath`
     if (lastStep != null && string.IsNullOrEmpty(lastStep.videoFilePath)) {
+      Debug.Log("DeleteStepWithNoVideo(" + lastStep.id + ")");
+      
+      // Delete the step from the TutorialStore
       TutorialStore.DeleteStep(lastStep.id);
+      
+      // Delete the step from the scene
+      GameObject stepGo = GameObject.Find(lastStep.id);
+      stepGo.GetComponent<StepController>().isBeingDestroyed = true;
+      Destroy(stepGo);
     }
   }
 
