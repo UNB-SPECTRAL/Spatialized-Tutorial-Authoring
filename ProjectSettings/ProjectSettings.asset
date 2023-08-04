@@ -194,6 +194,10 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   - {fileID: 5174085409334855040, guid: 48c5ee6d7e72e6d419df37eb6bbbdefb, type: 2}
   - {fileID: -1705760921844531124, guid: d81f5e0957d51304786e66e618b5f3b8, type: 2}
   - {fileID: 0}
@@ -680,7 +684,7 @@ PlayerSettings:
   metroCertificatePassword: 
   metroCertificateSubject: UNB HCI Lab
   metroCertificateIssuer: UNB HCI Lab
-  metroCertificateNotAfter: 803d86f991bed901
+  metroCertificateNotAfter: 80cedf6077e5da01
   metroApplicationDescription: Template_3D
   wsaImages: {}
   metroTileShortName: HoloLense HCI Project
