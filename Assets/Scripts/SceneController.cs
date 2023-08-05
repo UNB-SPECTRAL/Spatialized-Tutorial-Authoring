@@ -17,7 +17,8 @@ public class SceneController : MonoBehaviour {
   [Header("Authoring Scene")]
   public GameObject createTutorialButton;
   public GameObject stepList;
-  public GameObject startStepRecordingButton;
+  public GameObject confirmStepPositionButton;
+  // @deprecated for experiment #3
   public GameObject stopStepRecordingButton;
 
   /*** Guidance Scene ***/
@@ -35,7 +36,7 @@ public class SceneController : MonoBehaviour {
     /* Authoring */
     CreateTutorial, // MainMenu -- Click "Authoring" --> CreateTutorial
     CreateStep,     // CreateTutorial -- Click "Start new Tutorial" --> CreateStep (Able to say "Mark" and "Tap To Place")
-    StartStepRecording, // CreateStep -- "Tap to place" --> StartRecording (Must click "Start Recording" to start recording)
+    ConfirmStepPosition, // CreateStep -- "Tap to place" --> StartRecording (Must click "Start Recording" to start recording)
     CreateStepRecording,
     CreateStepPlaying,
 
@@ -97,7 +98,7 @@ public class SceneController : MonoBehaviour {
         
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
-        startStepRecordingButton.SetActive(false);
+        confirmStepPositionButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
@@ -109,44 +110,50 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(true);
         stepList.SetActive(false);
-        startStepRecordingButton.SetActive(false);
+        confirmStepPositionButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
  
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
         chevron.SetActive(false);
         break;
+      // TODO: Figure out what does the `CreateStepPlaying` state do?
       case SceneState.CreateStep:
       case SceneState.CreateStepPlaying:
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(true);
-        startStepRecordingButton.SetActive(false);
+        confirmStepPositionButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
         chevron.SetActive(false);
         break;
-      case SceneState.StartStepRecording: 
+      
+      // After the user creates a step, they must confirm the position of the step.
+      case SceneState.ConfirmStepPosition:
         mainMenu.SetActive(false);
         
         createTutorialButton.SetActive(false);
         stepList.SetActive(true);
-        startStepRecordingButton.SetActive(true);
+        confirmStepPositionButton.SetActive(true);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(false);
         tutorialListBackButton.SetActive(false);
         chevron.SetActive(false);
         break;
+      
+      // @deprecated for experiment #3
       case SceneState.CreateStepRecording:
+        Debug.LogError("HoloTuts: SceneState.CreateStepRecording is deprecated.");
         mainMenu.SetActive(false);
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
-        startStepRecordingButton.SetActive(false);
+        confirmStepPositionButton.SetActive(false);
         stopStepRecordingButton.SetActive(true);
 
         tutorialList.SetActive(false);
@@ -159,7 +166,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
-        startStepRecordingButton.SetActive(false);
+        confirmStepPositionButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
         
         tutorialList.SetActive(true);
@@ -173,7 +180,7 @@ public class SceneController : MonoBehaviour {
 
         createTutorialButton.SetActive(false);
         stepList.SetActive(false);
-        startStepRecordingButton.SetActive(false);
+        confirmStepPositionButton.SetActive(false);
         stopStepRecordingButton.SetActive(false);
 
         tutorialList.SetActive(false);
@@ -212,9 +219,9 @@ public class SceneController : MonoBehaviour {
     ActionController.Instance.RemoveStepsFromScene(); 
     State = SceneState.MainMenu;
   }
-  
-  public void OnStartStepRecordingButtonPress() {
-    Debug.Log("OnStartStepRecordingButtonPress()");
+    
+  public void OnConfirmStepPositionButtonPress() {
+    Debug.Log("HoloTuts: OnConfirmStepPositionButtonPress()");
     
     // Stop all video players before starting a new step recording since this
     // can cause issues with the recording.
@@ -226,7 +233,10 @@ public class SceneController : MonoBehaviour {
       Instance._activeStepController.videoPlayer.Pause();
     }
     
-    ActionController.Instance.StartRecording();
+    // ActionController.Instance.StartRecording();
+    
+    // Update the SceneState to `CreateStep`.
+    State = SceneState.CreateStep;
   }
 
   public void OnStopStepRecordingButtonPress() {
@@ -284,7 +294,7 @@ public class SceneController : MonoBehaviour {
   public static bool CanClickStep() {
     return State == SceneState.CreateStep
            || State == SceneState.CreateStepPlaying
-           || State == SceneState.StartStepRecording
+           || State == SceneState.ConfirmStepPosition
            || State == SceneState.ViewSteps
            || State == SceneState.ViewStepPlaying;
   }
@@ -317,7 +327,7 @@ public class SceneController : MonoBehaviour {
 
     // Update the state if needed (since we could be pausing an active video and
     // would already be in these states).
-    if (State == SceneState.CreateStep || State == SceneState.StartStepRecording) State     = SceneState.CreateStepPlaying;
+    if (State == SceneState.CreateStep || State == SceneState.ConfirmStepPosition) State     = SceneState.CreateStepPlaying;
     else if (State == SceneState.ViewSteps) State = SceneState.ViewStepPlaying;
   }
 
@@ -336,8 +346,10 @@ public class SceneController : MonoBehaviour {
     Instance._activeStepController = null;
 
     // Update the state accordingly.
-    if (State == SceneState.CreateStepPlaying) State    = SceneState.CreateStep;
-    else if (State == SceneState.ViewStepPlaying) State = SceneState.ViewSteps;
+    // NOTE: Commenting this out since we want to go back to the ConfirmStepPosition
+    // if (State == SceneState.CreateStepPlaying) State    = SceneState.CreateStep;
+    if      (State == SceneState.CreateStepPlaying) State = SceneState.ConfirmStepPosition;
+    else if (State == SceneState.ViewStepPlaying)   State = SceneState.ViewSteps;
     else Debug.LogError("PauseOrStopStepVideo() called in an invalid state: " + State);
   }
   

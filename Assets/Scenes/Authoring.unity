@@ -8015,7 +8015,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Start Recording
+  m_text: Confirm Position
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6a84f857bec7e7345843ae29404c57ce, type: 2}
   m_sharedMaterial: {fileID: 21202819797275496, guid: 6a84f857bec7e7345843ae29404c57ce, type: 2}
@@ -15875,7 +15875,7 @@ MonoBehaviour:
   mainMenu: {fileID: 1997802929}
   createTutorialButton: {fileID: 1678137444}
   stepList: {fileID: 8782692737932109267}
-  startStepRecordingButton: {fileID: 1994791349}
+  confirmStepPositionButton: {fileID: 1994791349}
   stopStepRecordingButton: {fileID: 1550715696}
   tutorialList: {fileID: 266051740362701678}
   tutorialListBackButton: {fileID: 986140198}
@@ -21931,7 +21931,7 @@ GameObject:
   - component: {fileID: 1994791352}
   - component: {fileID: 1994791351}
   m_Layer: 0
-  m_Name: Start Step Recording Button
+  m_Name: Confirm Step Position Button
   m_TagString: Button
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22029,7 +22029,7 @@ MonoBehaviour:
   iconSprite: {fileID: 21300000, guid: 20f25674b9512834f88938d45ed495d7, type: 3}
   iconQuadRenderer: {fileID: 2049152679}
   iconQuadTextureNameID: _MainTex
-  iconQuadTexture: {fileID: 2800000, guid: d6a8d6d764af76740ad06383ee810941, type: 3}
+  iconQuadTexture: {fileID: 2800000, guid: b5066c514f7f02f4292cf842f3c8b75f, type: 3}
   defaultButtonQuadMaterial: {fileID: 2100000, guid: fa419ab56051229449e3b813df8f295f, type: 2}
   iconSet: {fileID: 11400000, guid: 8b386ef895f7c924f8c4b03d1d3ed683, type: 2}
   defaultIconSet: {fileID: 11400000, guid: 8b386ef895f7c924f8c4b03d1d3ed683, type: 2}
@@ -22185,7 +22185,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1377876654}
         m_TargetAssemblyTypeName: SceneController, Assembly-CSharp
-        m_MethodName: OnStartStepRecordingButtonPress
+        m_MethodName: OnConfirmStepPositionButtonPress
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

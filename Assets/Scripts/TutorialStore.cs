@@ -31,6 +31,8 @@ public class TutorialStore {
       TutorialStore tutorialStore = new TutorialStore();
 
       // Save the newly created file
+      // FIXME: When the file does not exist, it cannot be created we found. There is more research that is needed to 
+      // validate this.
       tutorialStore.Save();
 
       Debug.Log("TutorialStore: Loaded");
@@ -56,6 +58,7 @@ public class TutorialStore {
     if (tutorials.Count != 0) latestTutorialId = Int32.Parse(tutorials[tutorials.Count - 1].id.Split('_')[1]);
     Tutorial tutorial                          = new Tutorial(latestTutorialId + 1);
 
+    // NOTE: For experiment #3, we will not be storing videos in streaming assets and thus don't need to delete them.
     // Delete existing tutorial videos that are prefixed with the new tutorial ID.
     // Since there is sometimes remaining videos files on the HoloLens from 
     // previous recordings on the Windows machine.
@@ -232,48 +235,50 @@ public class TutorialStore {
       // Find the step
       var step = steps.Find(s => s.id == stepId);
 
-      // If it does not exist, bail out.
+      // If it does not exist, bail.
       if (step == null) return;
-
+      
+      // NOTE: For Experiment #3, we don't store video files and thus don't need to delete them
       // Delete the video file.
       // FIXME: Update this, since we don't want to delete this file.
-      string videoFilePath = Path.Combine(Application.streamingAssetsPath, stepId + ".mp4");
-      if (File.Exists(videoFilePath)) {
-        File.Delete(videoFilePath);
-      }
+      // string videoFilePath = Path.Combine(Application.streamingAssetsPath, stepId + ".mp4");
+      // if (File.Exists(videoFilePath)) {
+      //   File.Delete(videoFilePath);
+      // }
 
       // Delete the step from the list of steps.
       steps.RemoveAll(s => s.id == stepId);
-
+      
+      // NOTE: For Experiment #3, we won't allow deleting of steps.
       // Re-normalize the step data
       // Iterate over each step
-      for (int i = 0; i < steps.Count; i++) {
-        // Check if the step id is correct
-        string expectedStepId = id + "_step_" + (i + 1);
-        string currentStepId  = steps[i].id;
-        if (expectedStepId == currentStepId) continue; // If it's correct, continue.
-
-        // Otherwise, the step is out of sequence
-        // Update the step id
-        steps[i].id = expectedStepId;
-        // Update the step name
-        steps[i].name = "" + (i + 1);
-        if (String.IsNullOrEmpty(steps[i].transcript) != true) {
-          steps[i].name += ": " + steps[i].transcript.Substring(0, (Math.Min(15, steps[i].transcript.Length))) + "...";  
-        }
-        // Update the video file path
-        if (String.IsNullOrEmpty(steps[i].videoFilePath) != true) {
-          // FIXME: Update this is the we can get access to the `/Downloads/` folder...
-          Debug.LogError("When deleting a Step, we need to rename the video file in the Downloads folder and not in the streaming assets folder.");
-          string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
-          File.Move(
-            Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
-            newVideoFilePath
-          ); 
-          // Rename the video file
-          steps[i].videoFilePath = newVideoFilePath;
-        }
-      }
+      // for (int i = 0; i < steps.Count; i++) {
+      //   // Check if the step id is correct
+      //   string expectedStepId = id + "_step_" + (i + 1);
+      //   string currentStepId  = steps[i].id;
+      //   if (expectedStepId == currentStepId) continue; // If it's correct, continue.
+      //
+      //   // Otherwise, the step is out of sequence
+      //   // Update the step id
+      //   steps[i].id = expectedStepId;
+      //   // Update the step name
+      //   steps[i].name = "" + (i + 1);
+      //   if (String.IsNullOrEmpty(steps[i].transcript) != true) {
+      //     steps[i].name += ": " + steps[i].transcript.Substring(0, (Math.Min(15, steps[i].transcript.Length))) + "...";  
+      //   }
+      //   // Update the video file path
+      //   if (String.IsNullOrEmpty(steps[i].videoFilePath) != true) {
+      //     // FIXME: Update this is the we can get access to the `/Downloads/` folder...
+      //     Debug.LogError("When deleting a Step, we need to rename the video file in the Downloads folder and not in the streaming assets folder.");
+      //     string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
+      //     File.Move(
+      //       Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
+      //       newVideoFilePath
+      //     ); 
+      //     // Rename the video file
+      //     steps[i].videoFilePath = newVideoFilePath;
+      //   }
+      // }
     }
 
     [Serializable]

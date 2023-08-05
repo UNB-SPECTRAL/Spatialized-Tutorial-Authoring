@@ -77,6 +77,7 @@ public class StepController : MonoBehaviour {
     
     /*** Setup Delete Button ***/
     deleteButton.SetActive(false); // Hide the button
+    // NOTE: For experiment #3, even though we are adding a button press listener, we don't enable the button at app.
     deleteButton.GetComponent<ButtonConfigHelper>().OnClick.AddListener(() => {
       SceneController.Instance.OnDeleteStepButtonPress(stepDetails);
     }); // Setup the listener
@@ -104,10 +105,11 @@ public class StepController : MonoBehaviour {
     
     /*** Update Delete Button Visibility ***/
     // If we are in the CreateStep state and the delete button is not visible, make it visible
-    if(
-      SceneController.State == SceneState.CreateStep
-      && deleteButton.activeSelf == false
-    ) deleteButton.SetActive(true);
+    // NOTE: Experiment #3 will not allow Steps to be deleted...
+    // if(
+    //   SceneController.State == SceneState.CreateStep
+    //   && deleteButton.activeSelf == false
+    // ) deleteButton.SetActive(true);
     
     /*** Update Height ***/
     // If another StepController is playing a video, increase this Step's height
