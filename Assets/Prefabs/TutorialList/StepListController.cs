@@ -10,7 +10,7 @@ public class StepListController : MonoBehaviour {
   public GameObject           backButton;
 
   void Start() {
-    Debug.Log("TutorialListController.Start()");
+    Debug.Log("StepList.Start()");
     // Setup the back button once.
     backButton.GetComponent<ButtonConfigHelper>().OnClick.AddListener(() => {
       SceneController.Instance.OnStopTutorialButtonPress();
@@ -20,7 +20,7 @@ public class StepListController : MonoBehaviour {
   // Each time we enable this component, we need to rebuild the list of 
   // steps in case some were deleted.
   public void OnEnable() {
-    Debug.Log("StepListController.OnEnable()");
+    Debug.Log("StepList.OnEnable()");
     // Delete all the children of the grid object collection.
     foreach (Transform child in gridObjectCollection.transform) {
       Destroy(child.gameObject);

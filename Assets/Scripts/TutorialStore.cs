@@ -15,14 +15,17 @@ public class TutorialStore {
 
   /** Maybe loads the TutorialStore from disk or instantiates a new one. */
   public static TutorialStore Load() {
-    try {
-      var filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
-      var serializedData = File.ReadAllText(filePath);
-      Debug.Log("TutorialStore: Loaded");
-      return JsonUtility.FromJson<TutorialStore>(serializedData);
-    }
-    catch (FileNotFoundException) {
-      Debug.Log("Cannot find " + FileName + " in " + Application.streamingAssetsPath + ". Creating new file.");
+    Debug.Log("HoloTuts: TutorialStore.Load()");
+
+    // Generate the file path
+    var filePath = Path.Combine(Application.streamingAssetsPath, FileName);
+    Debug.Log("HoloTuts: filePath: " + filePath);
+
+    // If the file path does not exist, create a new file and save it.
+    if (!File.Exists(filePath)) {
+      // If not, create one.
+      Debug.Log("HoloTuts: Cannot find " + FileName + " in " + Application.streamingAssetsPath +
+                ". Creating new file.");
 
       // If no file exists, create a new one.
       TutorialStore tutorialStore = new TutorialStore();
@@ -31,9 +34,19 @@ public class TutorialStore {
       tutorialStore.Save();
 
       Debug.Log("TutorialStore: Loaded");
+      
       // Return the newly created file.
       return tutorialStore;
     }
+    
+    // If it does exist, load the file.
+    Debug.Log("HoloTuts: Found " + FileName + " in " + Application.streamingAssetsPath + ". Loading file.");
+    
+    var serializedData = File.ReadAllText(filePath);
+    
+    Debug.Log("TutorialStore: Loaded");
+    
+    return JsonUtility.FromJson<TutorialStore>(serializedData);
   }
 
   /** Create a new tutorial and delete existing tutorial videos */
@@ -46,12 +59,12 @@ public class TutorialStore {
     // Delete existing tutorial videos that are prefixed with the new tutorial ID.
     // Since there is sometimes remaining videos files on the HoloLens from 
     // previous recordings on the Windows machine.
-    string[] videoFiles = Directory.GetFiles(
-      Application.streamingAssetsPath, "tutorial_" + tutorial.id + "*.mp4"
-    );
-    foreach (string videoFile in videoFiles) {
-      File.Delete(videoFile);
-    }
+    // string[] videoFiles = Directory.GetFiles(
+    //   Application.streamingAssetsPath, "tutorial_" + tutorial.id + "*.mp4"
+    // );
+    // foreach (string videoFile in videoFiles) {
+    //   File.Delete(videoFile);
+    // }
 
     tutorials.Add(tutorial);
 
@@ -148,6 +161,7 @@ public class TutorialStore {
   }
 
   private void Save() {
+    Debug.Log("HoloTuts: TutorialStore.Save()");
     string filePath       = Path.Combine(Application.streamingAssetsPath, FileName);
     string serializedData = JsonUtility.ToJson(this, true);
     File.WriteAllText(filePath, serializedData);
@@ -168,8 +182,20 @@ public class TutorialStore {
 
     /** Add a step to a tutorial */
     public StepDetails AddStep(Pose pose) {
-      StepDetails step = new StepDetails(id, steps.Count + 1, pose);
-      steps.Add(step);
+      Debug.Log("HoloTuts: TutorialStore.AddStep()");
+      
+      // Calculate the ID for the new/next step.
+      int newStepId = steps.Count + 1;
+      
+      // Generate the file path for the video file
+      var videoFilePath = Path.Combine(Application.streamingAssetsPath, "step-" + newStepId + ".mp4");
+      Debug.Log("HoloTuts: videoFilePath: " + videoFilePath);
+        
+      // Create the Step with the video file
+      StepDetails step = new StepDetails(id, steps.Count + 1, pose, videoFilePath);
+      steps.Add(step); // Add it to the steps
+      
+      // Return the step for good measure
       return step;
     }
 
@@ -179,6 +205,7 @@ public class TutorialStore {
 
       switch (key) {
         case "videoFilePath":
+          Debug.LogError("Should not be updating `videoFilePath` via `UpdateLastStep`");
           string videoFilePath = (string) value;
           lastStepDetails.videoFilePath = videoFilePath;
           break;
@@ -209,6 +236,7 @@ public class TutorialStore {
       if (step == null) return;
 
       // Delete the video file.
+      // FIXME: Update this, since we don't want to delete this file.
       string videoFilePath = Path.Combine(Application.streamingAssetsPath, stepId + ".mp4");
       if (File.Exists(videoFilePath)) {
         File.Delete(videoFilePath);
@@ -235,11 +263,14 @@ public class TutorialStore {
         }
         // Update the video file path
         if (String.IsNullOrEmpty(steps[i].videoFilePath) != true) {
+          // FIXME: Update this is the we can get access to the `/Downloads/` folder...
+          Debug.LogError("When deleting a Step, we need to rename the video file in the Downloads folder and not in the streaming assets folder.");
           string newVideoFilePath = Path.Combine(Application.streamingAssetsPath, expectedStepId + ".mp4");
           File.Move(
             Path.Combine(Application.streamingAssetsPath, currentStepId + ".mp4"),
             newVideoFilePath
-          ); // Rename the video file
+          ); 
+          // Rename the video file
           steps[i].videoFilePath = newVideoFilePath;
         }
       }
@@ -254,11 +285,22 @@ public class TutorialStore {
       public string transcript;
 
       /** Constructor */
-      public StepDetails(string tutorialId, int id, Pose pose) {
-        this.id    = tutorialId + "_step_" + id;
-        name       = "" + id;
-        globalPose = pose;
+      public StepDetails(string tutorialId, int id, Pose pose, string videoFilePath) {
+        this.id       = tutorialId + "_step_" + id;
+        name = GetStepName(id);
+        globalPose    = pose;
+        this.videoFilePath = videoFilePath;
+      }
+
+      private string GetStepName(int stepId) {
+        switch (stepId) {
+          case 1: return "Test 1";
+          case 2: return "Test 2";
+          default: return "Test Default";
+        }
       }
     }
+    
+    
   }
 }
