@@ -439,7 +439,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Tooltip Text
+  m_text: Very Long Text That Should Wrap.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: afc8299d5d5bbd440a0616c8ecbc7217, type: 2}
   m_sharedMaterial: {fileID: 21340371490990018, guid: afc8299d5d5bbd440a0616c8ecbc7217, type: 2}
@@ -482,9 +482,9 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 0
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
-  m_overflowMode: 1
+  m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
@@ -622,7 +622,7 @@ Transform:
   m_GameObject: {fileID: 5355749801973152014}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0.001}
-  m_LocalScale: {x: 0.15336993, y: 0.03495355, z: 1}
+  m_LocalScale: {x: 0.2068201, y: 0.0549071, z: 1}
   m_Children: []
   m_Father: {fileID: 5357511478896089470}
   m_RootOrder: 3
@@ -1037,7 +1037,7 @@ MonoBehaviour:
   pivot: {fileID: 5354808337446324140}
   label: {fileID: 5355677086199746734}
   contentParent: {fileID: 5355713087311198238}
-  toolTipText: Tooltip Text
+  toolTipText: Very Long Text That Should Wrap.
   backgroundPadding: {x: 0.075, y: 0.015}
   backgroundOffset: {x: 0, y: 0, z: 0}
   contentScale: 2
@@ -1151,7 +1151,7 @@ MonoBehaviour:
     position: {x: 0, y: 0, z: 0}
     rotation: {x: 0, y: 0, z: 0, w: 1}
   endPoint:
-    position: {x: 0, y: 0.21504645, z: 0}
+    position: {x: 0, y: 0.1950929, z: 0}
     rotation: {x: 0, y: 0, z: 0, w: 1}
 --- !u!114 &5458662067650598596
 MonoBehaviour:
@@ -1301,7 +1301,7 @@ LineRenderer:
   m_SortingOrder: 0
   m_Positions:
   - {x: 0, y: 0, z: 1}
-  - {x: 0, y: 0.21504645, z: 1}
+  - {x: 0, y: 0.1950929, z: 1}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 0.01

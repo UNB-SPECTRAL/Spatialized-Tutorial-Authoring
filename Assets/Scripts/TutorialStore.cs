@@ -186,16 +186,9 @@ public class TutorialStore {
     /** Add a step to a tutorial */
     public StepDetails AddStep(Pose pose) {
       Debug.Log("HoloTuts: TutorialStore.AddStep()");
-      
-      // Calculate the ID for the new/next step.
-      int newStepId = steps.Count + 1;
-      
-      // Generate the file path for the video file
-      var videoFilePath = Path.Combine(Application.streamingAssetsPath, "step-" + newStepId + ".mp4");
-      Debug.Log("HoloTuts: videoFilePath: " + videoFilePath);
         
       // Create the Step with the video file
-      StepDetails step = new StepDetails(id, steps.Count + 1, pose, videoFilePath);
+      StepDetails step = new StepDetails(id, steps.Count + 1, pose);
       steps.Add(step); // Add it to the steps
       
       // Return the step for good measure
@@ -290,22 +283,48 @@ public class TutorialStore {
       public string transcript;
 
       /** Constructor */
-      public StepDetails(string tutorialId, int id, Pose pose, string videoFilePath) {
+      public StepDetails(string tutorialId, int id, Pose pose) {
         this.id       = tutorialId + "_step_" + id;
-        name = GetStepName(id);
+        name          = GetStepName(id);
         globalPose    = pose;
-        this.videoFilePath = videoFilePath;
+        videoFilePath = Path.Combine(Application.streamingAssetsPath, "Step-" + id + ".mp4");
       }
 
       private string GetStepName(int stepId) {
         switch (stepId) {
-          case 1: return "Test 1";
-          case 2: return "Test 2";
-          default: return "Test Default";
+          case 1 : return "Start Here";
+          case 2 : return "Grab water bucket 1";
+          case 3 : return "6*5*4*3*2\nMonstera-19";
+          case 4 : return "6*5*4*3*2\nMonstera-1";
+          case 5 : return "6*5*4*3*2\nMonstera-25";
+          case 6 : return "6*5*4*3*2\nMonstera-6";
+          case 7 : return "6*5*4*3*2\nMonstera-24";
+          case 8 : return "2*6*5*4*3\nDraceana-20";
+          case 9 : return "2*6*5*4*3\nDraceana-9";
+          case 10: return "2*6*5*4*3\nDraceana-17";
+          case 11: return "Grab water bucket 2";
+          case 12: return "2*6*5*4*3\nDraceana-2";
+          case 13: return "2*6*5*4*3\nDraceana-22"; 
+          case 14: return "3*2*6*5*4\nSansevieria-18";
+          case 15: return "3*2*6*5*4\nSansevieria-10";
+          case 16: return "3*2*6*5*4\nSansevieria-5";
+          case 17: return "3*2*6*5*4\nSansevieria-21";
+          case 18: return "3*2*6*5*4\nSansevieria-15";
+          case 19: return "4*3*2*6*5\nFicus-13";
+          case 20: return "4*3*2*6*5\nFicus-7";
+          case 21: return "4*3*2*6*5\nFicus-12";
+          case 22: return "4*3*2*6*5\nFicus-3";
+          case 23: return "Grab water bucket 3";
+          case 24: return "4*3*2*6*5\nFicus-16";
+          case 25: return "5*4*3*2*6\nAnthurium-23";
+          case 26: return "5*4*3*2*6\nAnthurium-11";
+          case 27: return "5*4*3*2*6\nAnthurium-4";
+          case 28: return "5*4*3*2*6\nAnthurium-14";
+          case 29: return "5*4*3*2*6\nAnthurium-8";
+          case 30: return "Put any waste strip and empty bins here";
+          default: return "Missing Text";
         }
       }
     }
-    
-    
   }
 }
