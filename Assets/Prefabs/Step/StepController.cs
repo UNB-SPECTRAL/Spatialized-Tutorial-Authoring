@@ -12,6 +12,8 @@ using SceneState = SceneController.SceneState;
 
 /**
  * This class is responsible to naming, positioning and handling the video player on the MRTK 2 ToolTip prefab.
+ *
+ * TODO: When playing another video, unprepare all other videos to save on memory.
  */
 public class StepController : MonoBehaviour {
   /*** Unity Editor ***/
@@ -140,8 +142,9 @@ public class StepController : MonoBehaviour {
   void SetupVideoPlayer(string url) {
     videoPlayer.url               = url;
     videoPlayer.aspectRatio       = VideoAspectRatio.FitInside;
-    // TODO: What we can do in the future is just render an image component above or something
-    // so that we can show the thumbnail image while we load out the video.
+    /* TODO: What we should do in the future is render an image component above the video player
+     * so that we can show the thumbnail image vs loading the video to get the thumbnail image.
+     */
     //videoPlayer.renderMode        = VideoRenderMode.APIOnly; 
     videoPlayer.targetCameraAlpha = 0.8f;
 
@@ -152,66 +155,67 @@ public class StepController : MonoBehaviour {
 
     // Finally generate a thumbnail of the video after ToolTip script has completed (wait 0.2s)
     // BUG: The ToolTip prefab is somehow disabling the VideoPlayer and causing an "Cannot Prepare a disabled VideoPlayer" error.
-    StartCoroutine(Utilities.WaitForSecondsAnd(0.2f, () => {
-      // To generate a thumbnail, we are essentially preparing the video (similar
-      // to pressing play) then pausing the video (which renders the first frame)
-      // and then showing the videoPlayer mesh.
-      // A more performant approach would be to follow the link below with
-      // updating the frame and saving this as an image to the un-preparing the
-      // video afterwards. TODO: Reference HoloVision to see how they did it.
-      // This code was inspired by: https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687
-      // https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687/
-      // https://stackoverflow.com/questions/68232628/white-frame-before-video-plays-in-unity-instead-of-a-custom-thumbnail
-      // https://forum.unity.com/threads/create-thumbnail-from-video.769655/
-      // https://forum.unity.com/threads/how-to-get-video-thumbnails-without-running-the-video.753419/
-
-      // Preparing the video so that we can load the first frame
-      videoPlayer.Prepare();
-      videoPlayer.prepareCompleted += (source) => {
-        Debug.Log("Video prepared");
-        
-        // Show the first frame of the video, and not the frame 0 since on the
-        // HoloLens the first frame is a grey frame.
-        videoPlayer.frame = 1;
-        
-        // This renders the first frame of the video onto the VideoPlayer mesh.
-        videoPlayer.Pause();
-      };
-      
-      // This worked when in APIOnly Mode.
-      /*videoPlayer.sendFrameReadyEvents = true;
-      videoPlayer.frameReady += (source, frameIndex) => {
-        Debug.Log("Frame " + frameIndex + " Ready");
-        
-        // Once a frame is ready, we use it to extract a thumbnail image.
-        // TODO: An optimization could be to generate a thumbnail image .jpg
-        // so that we don't have to load all the videos.
-        var thumbnail                                             = source.texture;
-        videoPlayer.GetComponent<Renderer>().material.mainTexture = thumbnail;
-      };*/
-      
-      // When setting up the VideoPlayer we want to be notified when the video
-      // is ended to notify the RecordSceneController.
-      videoPlayer.loopPointReached += (source) => {
-        Debug.Log("Step " + stepDetails.id + " video ended");
-        
-        // Once the video has ended, reset the video to show the first frame.
-        // frame = 0 is sometimes a grey frame on the HoloLens.
-        videoPlayer.frame = 1;
-        
-        // Notify the SceneController
-        SceneController.PauseOrStopStepVideo();
-
-        // Stop the video
-        // TODO: This was trying to un-prepare the video to save on RAM.
-        // Note that Stop will remove it from memory.
-        // See https://forum.unity.com/threads/close-video-player-and-free-memory.491749/
-        // videoPlayer.Stop();
-        
-        // Add the thumbnail to the Step
-        // videoPlayer.GetComponent<Renderer>().material.mainTexture = _thumbnail;
-      };
-    }));
+    // StartCoroutine(Utilities.WaitForSecondsAnd(0.2f, () => {
+    //   // To generate a thumbnail, we are essentially preparing the video (similar
+    //   // to pressing play) then pausing the video (which renders the first frame)
+    //   // and then showing the videoPlayer mesh.
+    //   // A more performant approach would be to follow the link below with
+    //   // updating the frame and saving this as an image to the un-preparing the
+    //   // video afterwards. TODO: Reference HoloVision to see how they did it.
+    //   // This code was inspired by:
+    //   // https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687
+    //   // https://forum.unity.com/threads/how-to-extract-frames-from-a-video.853687/
+    //   // https://stackoverflow.com/questions/68232628/white-frame-before-video-plays-in-unity-instead-of-a-custom-thumbnail
+    //   // https://forum.unity.com/threads/create-thumbnail-from-video.769655/
+    //   // https://forum.unity.com/threads/how-to-get-video-thumbnails-without-running-the-video.753419/
+    //
+    //   // Preparing the video so that we can load the first frame
+    //   videoPlayer.Prepare();
+    //   videoPlayer.prepareCompleted += (source) => {
+    //     Debug.Log("Video prepared");
+    //     
+    //     // Show the first frame of the video, and not the frame 0 since on the
+    //     // HoloLens the first frame is a grey frame.
+    //     videoPlayer.frame = 1;
+    //     
+    //     // This renders the first frame of the video onto the VideoPlayer mesh.
+    //     videoPlayer.Pause();
+    //   };
+    //   
+    //   // This worked when in APIOnly Mode.
+    //   /*videoPlayer.sendFrameReadyEvents = true;
+    //   videoPlayer.frameReady += (source, frameIndex) => {
+    //     Debug.Log("Frame " + frameIndex + " Ready");
+    //     
+    //     // Once a frame is ready, we use it to extract a thumbnail image.
+    //     // TODO: An optimization could be to generate a thumbnail image .jpg
+    //     // so that we don't have to load all the videos.
+    //     var thumbnail                                             = source.texture;
+    //     videoPlayer.GetComponent<Renderer>().material.mainTexture = thumbnail;
+    //   };*/
+    //   
+    //   // When setting up the VideoPlayer we want to be notified when the video
+    //   // is ended to notify the RecordSceneController.
+    //   videoPlayer.loopPointReached += (source) => {
+    //     Debug.Log("Step " + stepDetails.id + " video ended");
+    //     
+    //     // Once the video has ended, reset the video to show the first frame.
+    //     // frame = 0 is sometimes a grey frame on the HoloLens.
+    //     videoPlayer.frame = 1;
+    //     
+    //     // Notify the SceneController
+    //     SceneController.PauseOrStopStepVideo();
+    //
+    //     // Stop the video
+    //     // TODO: This was trying to un-prepare the video to save on RAM.
+    //     // Note that Stop will remove it from memory.
+    //     // See https://forum.unity.com/threads/close-video-player-and-free-memory.491749/
+    //     // videoPlayer.Stop();
+    //     
+    //     // Add the thumbnail to the Step
+    //     // videoPlayer.GetComponent<Renderer>().material.mainTexture = _thumbnail;
+    //   };
+    // }));
   }
 
   #region Public Methods
@@ -247,8 +251,8 @@ public class StepController : MonoBehaviour {
       SceneController.PauseOrStopStepVideo();
       
       // Pause the video
-      Debug.Log("Pausing Video"); 
-      videoPlayer.Pause();
+      Debug.Log("Stopping Video");
+      videoPlayer.Stop();
     }
   }
   #endregion 
