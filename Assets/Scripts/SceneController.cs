@@ -230,7 +230,7 @@ public class SceneController : MonoBehaviour {
       // Pause the video (it could already be paused)
       // Not calling PauseOrStopVideo() because we don't want to update the
       // scene state and then update it back.
-      Instance._activeStepController.videoPlayer.Stop();
+      Instance._activeStepController.StopVideo();
     }
     
     // ActionController.Instance.StartRecording();
@@ -319,7 +319,7 @@ public class SceneController : MonoBehaviour {
       // Pause the video (it could already be paused)
       // Not calling PauseOrStopVideo() because we don't want to update the
       // scene state and then update it back.
-      Instance._activeStepController.videoPlayer.Stop();
+      Instance._activeStepController.StopVideo();
     }
 
     // Replace the active stepController with the new one.

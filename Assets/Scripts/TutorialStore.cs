@@ -280,14 +280,16 @@ public class TutorialStore {
       public string name; // e.g. "1: something..." 
       public Pose   globalPose;
       public string videoFilePath;
+      public string thumbnailFilePath;
       public string transcript;
 
       /** Constructor */
       public StepDetails(string tutorialId, int id, Pose pose) {
-        this.id       = tutorialId + "_step_" + id;
-        name          = GetStepName(id);
-        globalPose    = pose;
-        videoFilePath = Path.Combine(Application.streamingAssetsPath, "Step-" + id + ".mp4");
+        this.id           = tutorialId + "_step_" + id;
+        name              = GetStepName(id);
+        globalPose        = pose;
+        videoFilePath     = Path.Combine(Application.streamingAssetsPath, "Step-" + id + ".mp4");
+        thumbnailFilePath = Path.Combine(Application.streamingAssetsPath, "Step-" + id + ".png");
       }
 
       private string GetStepName(int stepId) {
