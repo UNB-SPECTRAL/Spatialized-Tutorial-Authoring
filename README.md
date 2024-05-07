@@ -1,7 +1,7 @@
 <div align="center">
-   <h1>Spatial Tutorials</h1>
+   <h1>SpaceTüt: Spatial Tutorials</h1>
 
-   <p>Experiment using the Mircrosoft HoloLens to validate whether spatialized tutorials offer an advantage.</p>
+   <p>Experimental system for the Microsoft HoloLens 2 to validate whether spatialized tutorials offer an advantage.</p>
 
    <div>
       <img src="https://img.shields.io/badge/HoloLens%202-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
@@ -18,7 +18,7 @@
 
 # Welcome
 
-Welcome to the HCI Lab's Spatial Tutorials repo. This repo contains the Unity 
+his repo contains the Unity 
 code which runs on a Microsoft HoloLens 2
 
 # Getting Started
@@ -37,20 +37,20 @@ to be installed:
 
 ## HoloLens 2
 
-To get the project running on the HoloLens 2 there are two ways to do so. The 
-first way is to check if this project is already installed on your HoloLens as
+There are two ways to get the project running on the HoloLens 2. The 
+first way is to check if this project is already installed on your HoloLens, as
 the HCI Lab has installed it on a few HoloLens 2 devices. If it is, simply
 click on the application to get started.
 
 If the application is not installed on the HoloLens 2 device, then you will
 need to first complete the steps in **Windows Machine**
 
-To get started running the project, please follow the installs steps on the 
+To get started running the project, please follow the install steps on the 
 Microsoft.
 
 # Contributing
 
-To start contributing to this project, please follow these steps to setup your local machine.
+To start contributing to this project, please follow these steps to set up your local machine.
 
 ### Enable `Developer Mode`
 
@@ -117,22 +117,22 @@ Build configuration: Release
 ```
 4. Switch Platform
 
-### 3. Dowload the [Mixed Reality Feature Tool](https://learn.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool)
+### 3. Download the [Mixed Reality Feature Tool](https://learn.microsoft.com/en-us/windows/mixed-reality/develop/unity/welcome-to-mr-feature-tool)
 
 When opening the Unity project in the Unity Editor, you will see red warnings at the
 bottom of the application. These warnings appear since certain packages are missing.
 
-To install the missin packages, follow these steps:
+To install the missing packages, follow these steps:
 
 1. Open the **Mixed Reality Feature Tool**
 1. Start
-1. Chose the **Projec Path** of the project by clicking selecting the `Spatialized-Tutorial-Authoring` folder > Open > Open
+1. Chose the **Project Path** of the project by clicking selecting the `Spatialized-Tutorial-Authoring` folder > Open > Open
 
 ### 4. Download **[JetBrains Rider Editor](https://www.jetbrains.com/rider/)**
 
 To edit the game object scripts, it is recommended to use this editor vs VS Code and Visual Studio given its great integration and C# language support. 
 
-As a student, you can signup for the [free educational license](https://www.jetbrains.com/shop/eform/students) which will give you access to the Jetbrain Rider Editor for longer than 30 days
+As a student, you can sign up for the [free educational license](https://www.jetbrains.com/shop/eform/students) which will give you access to the Jetbrain Rider Editor for longer than 30 days
 
 
 
@@ -170,8 +170,8 @@ https://github.com/microsoft/MixedRealityToolkit-Unity/issues/10417
 
 **HoloLens home button does not work**
 
-The HoloLens in application wrist home menu/button should always work. If it does
-not, this is usually unrelated to your Unity code. 
+The HoloLens in the application wrist home menu/button should always work. If it does
+not work, this is usually unrelated to your Unity code. 
 
 To resolve this, you must restart the HoloLens by following these steps:
 
@@ -179,9 +179,4 @@ To resolve this, you must restart the HoloLens by following these steps:
 2. Press and hold the power button for 15 seconds
 3. Wait 3 seconds
 4. Then press the power button again (do not hold)
-5. Validate that the HoloLens home button it working. If not, go back to Step #2 as the power button may not have been held down long enough.
-
-### Microsoft Device Portal Login
-
-Username: Scott Bateman
-Password: 1234567
+5. Validate that the HoloLens home button is working. If not, go back to Step #2, as the power button may not have been held down long enough.
