@@ -53,9 +53,8 @@ public class ActionController : MonoBehaviour {
 
   #region Unity Methods
   /**
-   * In the Unity Awake method, we do the following actions:
-   * - Set the static reference to the instantiated RecordSceneController if none exists. Otherwise, destroy this GameObject.
-   * - Load the ToolTipStore from storage.
+   * In the Unity Awake method set the static reference to the instantiated ActionController if none exists. Otherwise,
+   * destroy this GameObject.
    */
   void Awake() {
     if (_instance == null) _instance = this;
@@ -66,22 +65,25 @@ public class ActionController : MonoBehaviour {
     /*** Component References ***/
     _speechInputHandler = GetComponent<SpeechInputHandler>();
     _interactable       = GetComponent<Interactable>();
-
-    _dictationHandler = GetComponent<DictationHandler>();
+    _dictationHandler   = GetComponent<DictationHandler>();
 
     /*** Dictation Handler Event Setup ***/
-    Debug.Log("Setting Up DictationHandler Callbacks");
+    // Debug.Log("Setting Up DictationHandler Callbacks");
     // Add an event listener when the DictationHandler stops recording.
-    _dictationHandler.OnDictationComplete.AddListener(OnDictationComplete);
+    // _dictationHandler.OnDictationComplete.AddListener(OnDictationComplete);
     // Capture the transcript hypothesis in real-time to determine if the keyword
     // "End Marking" is being said to stop the recording. This has to be done this
     // way since the MRTK keyword recognizer is turned off when the DictationHandler
     // is recording.
-    _dictationHandler.OnDictationHypothesis.AddListener(OnDictationHypothesis);
+    // _dictationHandler.OnDictationHypothesis.AddListener(OnDictationHypothesis);
     // Add an event listener when the DictationHandler has an error
-    _dictationHandler.OnDictationError.AddListener(OnDictationError);
+    // _dictationHandler.OnDictationError.AddListener(OnDictationError);
   }
-
+  
+  /**
+   * The SceneController calls this each time the state changes.
+   * This toggles the speech recognizer and interactable which handles click events.
+   */
   public void UpdateState(SceneState state) {
     switch (state) {
       case SceneState.MainMenu: {
@@ -100,12 +102,14 @@ public class ActionController : MonoBehaviour {
       }
       case SceneState.CreateStep: {
         /*** Create Step State ***/
-        if (!_speechInputHandler.enabled) _speechInputHandler.enabled = true;
+        // NOTE: Disabling the speech input handler for now
+        if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
+        // But keeping the interactable which is a click handler active
         if (!_interactable.enabled) _interactable.enabled             = true;
 
         break;
       }
-      case SceneState.StartStepRecording: {
+      case SceneState.ConfirmStepPosition: {
         /*** Start Step Recording State ***/
         // TODO: Do we still want to listen to mark?
         if (_speechInputHandler.enabled) _speechInputHandler.enabled = false;
@@ -140,9 +144,8 @@ public class ActionController : MonoBehaviour {
    * start a recording (video, audio).
    */
   private void CreateStep() {
-    // Only allow this function to be called when we are in the CreateStep or
-    // StartStepRecording state.
-    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+    // Only create a step when in the CreateStep state || ConfirmStepPosition state
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.ConfirmStepPosition) {
       Debug.LogError("CreateStep() can only be called when in the CreateStep or StartStepRecording state.");
       return;
     }
@@ -153,22 +156,44 @@ public class ActionController : MonoBehaviour {
     Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
     Pose       pose     = new Pose(position, rotation);
 
-    StepDetails stepDetails;
+    // When in the CreateStep state, create a new tuturial step.
     if (SceneController.State == SceneState.CreateStep) {
       // Create a new step in the TutorialStore if we are in the CreateStep state.
-      stepDetails = TutorialStore.CreateStep(pose);
+      var stepDetails = TutorialStore.CreateStep(pose);
       // And instantiate the step in the scene
       InstantiateStep(stepDetails);
+      
+      // Refresh the StepList UI
+      SceneController.Instance.stepList.GetComponent<StepListController>().OnEnable();
     }
+    // WHen in the ConfirmStepPosition, update the last step location.
     else {
       // Otherwise, update the last step location
-      stepDetails = TutorialStore.UpdateLastStep("globalPose", pose);
-      // TODO: See if the memory reference can just update the position...
+      TutorialStore.UpdateLastStep("globalPose", pose);
     }
 
     // Update the state to indicate that we are in the StartStepRecording state.
-    SceneController.State = SceneState.StartStepRecording;
+    // FIXME: This is a big change, when we create a step, we then allow to create another step.
+    // We are no longer asking to start a recording, and then do the recording....
+    // SceneController.State = SceneState.StartStepRecording;
     Debug.Log("State: " + SceneController.State);
+  }
+    
+  private void UpdateLastStepPosition() {
+    Debug.Log("HoloTuts: UpdateLastStepPosition()");
+    // Only update the last step position when in the ConfirmStepPosition state
+    if (SceneController.State != SceneState.ConfirmStepPosition) {
+      Debug.LogError("HoloTuts: UpdateLastStepPosition() can only be called in the " + SceneState.ConfirmStepPosition + " state.");
+      return;
+    }
+    
+    // Get the primary pointer location
+    Vector3    position = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Result.Details.Point;
+    Quaternion rotation = CoreServices.InputSystem.FocusProvider.PrimaryPointer.Rotation;
+    Pose       pose     = new Pose(position, rotation);
+    
+    // Update the last step positions position (via globalPose)
+    TutorialStore.UpdateLastStep("globalPose", pose);
   }
 
   /** Given StepDetails, instantiate a Step in the scene and return it's reference. */
@@ -195,6 +220,7 @@ public class ActionController : MonoBehaviour {
    * - Starting a speech to text (via Unity Dictation) recording
    */
   public void StartRecording() {
+    Debug.Log("StartRecording: THIS SHOULD NOT BE CALLED!");
     // When recording, change the state
     SceneController.State = SceneState.CreateStepRecording;
     
@@ -218,6 +244,8 @@ public class ActionController : MonoBehaviour {
   /*** Create Step State ***/
   /** When saying "Mark" */
   public void OnVoiceCommandMark() {
+    Debug.LogError("HoloTuts: OnVoiceCommandMark() should not be called.");
+    
     if (SceneController.State != SceneState.CreateStep) return; // Only allow this in the CreateStep state.
     if (ClickedInteractable() != null) return; // Don't allow if clicked on a game object.
     if (ClickedStep() != null) return; // Don't allow if clicked on a Step.
@@ -231,26 +259,46 @@ public class ActionController : MonoBehaviour {
 
   /** When "Air Click"ing */
   public void OnAirClickMark() {
-    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
-      Debug.Log("OnAirClickMark() called in incorrect state: " + SceneController.State);
-      return; // Only allow this in the CreateStep state.
+    Debug.Log("HoloTuts: OnAirClickMark()");
+    
+    // Only allow AirClicking when in the `CreateStep` or the `ConfirmStepPosition` state.
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.ConfirmStepPosition) {
+      Debug.Log("HoloTuts: OnAirClickMark() called in incorrect state: " + SceneController.State);
+      return; 
     }
-
+    
+    // Handle when clicking on an interactable element
     if (ClickedInteractable() != null) { // Pass event to interactable if exist
       Interactable clickedGoInteractable = ClickedInteractable();
       clickedGoInteractable.OnClick.Invoke();
       return;
     }
     
+    // Handle when clicking on a step element
     if (ClickedStep() != null) { // Pass event to Step if exist
       StepController stepController = ClickedStep();
       stepController.OnClick();
       return;
     }
-
-    Debug.Log("OnAirClickMark()");
-
-    CreateStep();
+    
+    // When in the CreateStep state, create a new step.
+    if (SceneController.State == SceneState.CreateStep) {
+      // Create a new step
+      CreateStep();
+      // And update the state to ConfirmStepPosition.
+      // This will show a "Confirm Step Position" button which can be used to add another step.
+      // Any air clicks during this time will update the last steps position.
+      SceneController.State = SceneState.ConfirmStepPosition;
+    } 
+    // When in the ConfirmStepPosition
+    else if (SceneController.State == SceneState.ConfirmStepPosition) {
+      // Update the position of the last step
+      UpdateLastStepPosition();
+      // We are not changing state, only when the "Confirm Step Position" button is clicked.
+    }
+    else {
+      Debug.LogError("HoloTuts: OnAirClickMark() should never get here.");
+    }
   }
 
   /**
@@ -281,7 +329,7 @@ public class ActionController : MonoBehaviour {
    * a step could be placed but not recorded.
    */
   public void DeleteStepWithNoVideo() {
-    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.ConfirmStepPosition) {
       Debug.LogError("DeleteStepWithNoVideo(): ERROR - Not in correct state: " + SceneController.State);
       return;
     }
@@ -315,7 +363,7 @@ public class ActionController : MonoBehaviour {
    */
   public void DeleteStep(StepDetails stepDetails) {
     // Validate that we are in the right state to delete a step
-    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.StartStepRecording) {
+    if (SceneController.State != SceneState.CreateStep && SceneController.State != SceneState.ConfirmStepPosition) {
       Debug.LogError("DeleteStep(): ERROR - Not in correct state: " + SceneController.State);
       return;
     }

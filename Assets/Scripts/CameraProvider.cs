@@ -4,7 +4,12 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Windows.WebCam;
 
-/** Abstraction around interacting with the Camera API in Unity. */
+/**
+ * Abstraction around interacting with the Camera API in Unity.
+ *
+ * NOTE: The camera is attached to the WLT_Adjustment > MixedRealityPlayspace > Main Camera game object and is disabled
+ * since we are not using it for this experiment. The camera is only used for recording videos.
+ */
 public class CameraProvider : MonoBehaviour {
   /** Private Static Variables */
   #region Private Static Variables
@@ -26,23 +31,28 @@ public class CameraProvider : MonoBehaviour {
   #endregion
 
   #region Unity Methods
+  
+  /**
+   * NOTE: Purposefully commenting out this code since we don't want this to run when the scene starts as this will run
+   * even if the game object is disabled.
+   */
   private void Awake() {
-    /*** Validation ***/
-    // Check if this script it attached to the `Main Camera` game object
-    if (gameObject.name != "Main Camera") {
-      Debug.LogError("CameraProvider must be attached to the `Main Camera` Game Object");
-      throw new Exception("CameraProvider must be attached to the `Main Camera` Game Object");
-    }
-    
-    // Check if there is a Microphone available for recording
-    if (!Microphone.devices.Any()) {
-      Debug.LogError("CameraProvider requires that a Microphone is available");
-      throw new Exception("CameraProvider requires that a Microphone is available");
-    }
-
-    // Then save a reference to the instance of this script
-    if (_instance == null) _instance = this;
-    else Destroy(gameObject);
+    // /*** Validation ***/
+    // // Check if this script it attached to the `Main Camera` game object
+    // if (gameObject.name != "Main Camera") {
+    //   Debug.LogError("CameraProvider must be attached to the `Main Camera` Game Object");
+    //   throw new Exception("CameraProvider must be attached to the `Main Camera` Game Object");
+    // }
+    //
+    // // Check if there is a Microphone available for recording
+    // if (!Microphone.devices.Any()) {
+    //   Debug.LogError("CameraProvider requires that a Microphone is available");
+    //   throw new Exception("CameraProvider requires that a Microphone is available");
+    // }
+    //
+    // // Then save a reference to the instance of this script
+    // if (_instance == null) _instance = this;
+    // else Destroy(gameObject);
   }
   
   /** This Unity method determines the best camera resolution that is at least 30FPS that the camera can support. */
