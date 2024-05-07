@@ -1,3 +1,20 @@
+<div align="center">
+   <h1>SpaceTüt: Spatial Tutorials</h1>
+
+   <p>Experimental system for the Microsoft HoloLens 2 to validate whether spatialized tutorials offer an advantage.</p>
+
+   <div>
+      <img src="https://img.shields.io/badge/HoloLens%202-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
+      &nbsp;&nbsp;&nbsp;
+      <img src="https://img.shields.io/badge/MRTK%202-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
+      &nbsp;&nbsp;&nbsp;
+      <img src="https://img.shields.io/badge/unity-%23000000.svg?style=for-the-badge&logo=unity&logoColor=white" />
+      &nbsp;&nbsp;&nbsp; 
+      <img src="https://img.shields.io/badge/c%23-%23239120.svg?style=for-the-badge&logo=c-sharp&logoColor=white" />
+   </div>
+</div>
+
+---
 # SpaceTüt: Spatial Tutorials
 
 This repo contains the Unity code, which runs on a Microsoft HoloLens 2
