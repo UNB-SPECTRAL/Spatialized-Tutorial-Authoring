@@ -1,7 +1,6 @@
 # SpaceTüt: Spatial Tutorials
 
-his repo contains the Unity 
-code which runs on a Microsoft HoloLens 2
+This repo contains the Unity code, which runs on a Microsoft HoloLens 2
 
 ## Getting Started
 
