@@ -1,33 +1,15 @@
-<div align="center">
-   <h1>SpaceTüt: Spatial Tutorials</h1>
-
-   <p>Experimental system for the Microsoft HoloLens 2 to validate whether spatialized tutorials offer an advantage.</p>
-
-   <div>
-      <img src="https://img.shields.io/badge/HoloLens%202-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
-      &nbsp;&nbsp;&nbsp;
-      <img src="https://img.shields.io/badge/MRTK%202-0078D4?style=for-the-badge&logo=microsoft&logoColor=white" />
-      &nbsp;&nbsp;&nbsp;
-      <img src="https://img.shields.io/badge/unity-%23000000.svg?style=for-the-badge&logo=unity&logoColor=white" />
-      &nbsp;&nbsp;&nbsp; 
-      <img src="https://img.shields.io/badge/c%23-%23239120.svg?style=for-the-badge&logo=c-sharp&logoColor=white" />
-   </div>
-</div>
-
----
-
-# Welcome
+# SpaceTüt: Spatial Tutorials
 
 his repo contains the Unity 
 code which runs on a Microsoft HoloLens 2
 
-# Getting Started
+## Getting Started
 
 To get started and run this application, there are two ways to do so. Either
 running the application on a Windows machine or running it on a HoloLens. Both
 methods are shown below.
 
-## Windows Machine
+### Windows Machine
 
 Running the application on a Windows machine will require the following packages
 to be installed:
@@ -35,7 +17,7 @@ to be installed:
 - Unity Hub
 - Mixed Reality Feature Tool
 
-## HoloLens 2
+### HoloLens 2
 
 There are two ways to get the project running on the HoloLens 2. The 
 first way is to check if this project is already installed on your HoloLens, as
@@ -48,7 +30,7 @@ need to first complete the steps in **Windows Machine**
 To get started running the project, please follow the install steps on the 
 Microsoft.
 
-# Contributing
+## Contributing
 
 To start contributing to this project, please follow these steps to set up your local machine.
 
@@ -136,15 +118,15 @@ As a student, you can sign up for the [free educational license](https://www.jet
 
 
 
-# Documentation
+## Documentation
 
-## Spatial Awareness
+### Spatial Awareness
 
 Spatial Awareness allows the HoloLens to sense the surrounding environment and to react to it. This allows the HoloLens
 to place objects "on" the environment and not "through" the environment.
 This should never be disabled.
 
-### Spatial Observers
+#### Spatial Observers
 
 Spatial Observers make sense of the spatial awareness data and provide a way to react to it. This is also what renders
 the visible spatial mesh.
@@ -160,13 +142,13 @@ To change the settings of the visible mesh being shown:
    3. Change the `DisplayOption` to
       any [valid option](https://docs.microsoft.com/en-us/windows/mixed-reality/mrtk-unity/mrtk2/features/spatial-awareness/configuring-spatial-awareness-mesh-observer?view=mrtkunity-2022-05#display-settings).
 
-### Questions
+#### Questions
 
-#### *Why are there 3 Spatial Observers in my project?*
+*Why are there 3 Spatial Observers in my project?*
 
 https://github.com/microsoft/MixedRealityToolkit-Unity/issues/10417
 
-# Troubleshooting
+## Troubleshooting
 
 **HoloLens home button does not work**
 
